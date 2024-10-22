@@ -1,73 +1,92 @@
 import { View, Text, SafeAreaView, TextInput } from 'react-native'
-import React from 'react'
+import React, { useContext } from 'react'
 import { StyleSheet } from 'react-native'
 import { TouchableOpacity } from 'react-native'
 import { useState } from 'react'
 import { TouchableWithoutFeedback } from 'react-native'
 import { Keyboard } from 'react-native'
+import { useNavigation } from '@react-navigation/native';
+import { AuthContext } from '../AuthProvider'
 
 import Icon from 'react-native-vector-icons/FontAwesome'
 
 const LoginScreen = () => {
+    const navigation = useNavigation();
 
     const [isPasswordVisible, setIsPasswordVisible] = useState(true)
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+
+    const { login } = useContext(AuthContext);
 
     return (
-            <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible = {false}>
-                <SafeAreaView style = {styles.inner}>
-                    <View style={styles.header}>
-                        <Text style={styles.title}>Log In</Text>
-                        <Text style={styles.subTitle}>Please log in to continue 🎧</Text>
-                    </View>
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+            <SafeAreaView style={styles.inner}>
+                <View style={styles.header}>
+                    <Text style={styles.title}>Log In</Text>
+                    <Text style={styles.subTitle}>Please log in to continue 🎧</Text>
+                </View>
 
-                    <View style={styles.inputContainer}>
-                        <Text style={{ marginHorizontal: 10 }}>Username</Text>
-                        <View style={styles.inputFieldContainer}>
-                            <TextInput
-                                style={styles.inputs}
-                                placeholder="Username"
-                                autoCapitalize="none"
-                                selectionColor="#000"
-                            />
-                        </View>
+                <View style={styles.inputContainer}>
+                    <Text style={{ marginHorizontal: 10 }}>Email</Text>
+                    <View style={styles.inputFieldContainer}>
+                        <TextInput
+                            style={styles.inputs}
+                            placeholder="Email"
+                            autoCapitalize="none"
+                            selectionColor="#000"
+                            value={email}
+                            onChangeText={setEmail}
+                        />
                     </View>
+                </View>
 
-                    <View style={styles.inputContainer}>
-                        <Text style={{ marginHorizontal: 10 }}>Password</Text>
-                        <View style={styles.passwordContainer}>
-                            <TextInput
-                                style={styles.inputs}
-                                placeholder="Password"
-                                autoCapitalize="none"
-                                secureTextEntry={isPasswordVisible}
-                                selectionColor="#000"
-                            />
-                            <TouchableOpacity onPress={() => {setIsPasswordVisible(!isPasswordVisible)}}>
-                                {isPasswordVisible ? <Icon name="eye" size={20} /> : <Icon name="eye-slash" size={20} />}
-                            </TouchableOpacity>
-                        </View>
+                <View style={styles.inputContainer}>
+                    <Text style={{ marginHorizontal: 10 }}>Password</Text>
+                    <View style={styles.passwordContainer}>
+                        <TextInput
+                            style={styles.inputs}
+                            placeholder="Password"
+                            autoCapitalize="none"
+                            secureTextEntry={isPasswordVisible}
+                            selectionColor="#000"
+                            value={password}
+                            onChangeText={setPassword}
+                        />
+                        <TouchableOpacity onPress={() => { setIsPasswordVisible(!isPasswordVisible) }}>
+                            {isPasswordVisible ? <Icon name="eye" size={20} /> : <Icon name="eye-slash" size={20} />}
+                        </TouchableOpacity>
                     </View>
+                </View>
 
-                    <TouchableOpacity style={styles.signinButton}>
-                        <Text style={styles.signinButtonText}>Sign In</Text>
+                <View style={styles.signUpContainer}>
+                    <Text>Do not have an account?</Text>
+                    <TouchableOpacity onPress={() => { navigation.navigate('Signup') }}>
+                        <Text style={{ color: '#6082B6', fontStyle: 'italic' }}>Sign Up</Text>
                     </TouchableOpacity>
-                </SafeAreaView>
-            </TouchableWithoutFeedback>
+                </View>
+
+                <TouchableOpacity style={styles.signinButton} onPress={ () => login(email, password) }>
+                    <Text style={styles.signinButtonText}>Sign In</Text>
+                </TouchableOpacity>
+
+            </SafeAreaView>
+        </TouchableWithoutFeedback>
     );
 };
 
 const styles = StyleSheet.create({
     inner: {
         flex: 1,
-        gap: 15,
+        gap: 5,
         alignItems: 'center',
-        backgroundColor: '#fff', 
+        backgroundColor: '#fff',
     },
 
     header: {
         alignItems: 'center',
         marginBottom: 20,
-        width: '70%', 
+        width: '70%',
     },
 
     title: {
@@ -99,7 +118,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 10,
         height: 50,
         marginTop: 5,
-    
+
     },
 
     passwordContainer: {
@@ -135,6 +154,11 @@ const styles = StyleSheet.create({
         fontSize: 20,
         alignSelf: 'center',
     },
+
+    signUpContainer: {
+        flexDirection: 'row',
+        gap: 10
+    }
 });
 
 
