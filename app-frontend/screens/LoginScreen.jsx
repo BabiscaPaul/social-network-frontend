@@ -19,6 +19,19 @@ const LoginScreen = () => {
 
     const { login } = useContext(AuthContext);
 
+    const handleLogin = async () => {
+        try {
+            const userData = await login(email, password);
+            if (userData.data.user.firstLogin) {
+                navigation.navigate('Welcome');
+            } else {
+                navigation.navigate('Home');
+            }
+        } catch (error) {
+            console.error('Login error:', error);
+        }
+    };
+
     return (
         <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
             <SafeAreaView style={styles.inner}>
@@ -66,7 +79,7 @@ const LoginScreen = () => {
                     </TouchableOpacity>
                 </View>
 
-                <TouchableOpacity style={styles.signinButton} onPress={ () => login(email, password) }>
+                <TouchableOpacity style={styles.signinButton} onPress={handleLogin}>
                     <Text style={styles.signinButtonText}>Sign In</Text>
                 </TouchableOpacity>
 

@@ -6,6 +6,7 @@ export const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
     
     const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [userData, setUserData] = useState(null);
 
     const login = async (email, password) => {
         try {
@@ -17,9 +18,13 @@ export const AuthProvider = ({ children }) => {
                 body: JSON.stringify({email, password}), 
             });
 
+            const data = await response.json();
+
             if (response.ok) {
                 console.log('logged in succesfully!');
                 setIsLoggedIn(true);
+                setUserData(data);
+                return data;
             } else {
                 console.log('Login failed');
             }
@@ -62,7 +67,7 @@ export const AuthProvider = ({ children }) => {
     }
 
     return (
-        <AuthContext.Provider value = {{isLoggedIn, login, signup, logout}}>
+        <AuthContext.Provider value = {{isLoggedIn, login, signup, logout, userData}}>
             {children}
         </AuthContext.Provider>
     );
