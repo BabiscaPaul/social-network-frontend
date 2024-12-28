@@ -58,6 +58,7 @@ export const AuthProvider = ({ children }) => {
             const response = await fetch(`${IP_PORT}${API_ROUTE}/users/signout`);
             if (response.ok) {
                 console.log('Logged out successfully');
+                setIsLoggedIn(false);
             } else {
                 console.log('Log out failed');
             }

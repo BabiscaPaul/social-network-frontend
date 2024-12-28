@@ -12,6 +12,9 @@ import {
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import Icon from 'react-native-vector-icons/FontAwesome';
+import { useNavigation } from '@react-navigation/native';
+
+import { API_ROUTE, IP_PORT } from '@env';
 
 const SetUpProfile = () => {
     const [firstName, setFirstName] = useState('');
@@ -19,25 +22,40 @@ const SetUpProfile = () => {
     const [birthDate, setBirthDate] = useState(null);
     const [showDatePicker, setShowDatePicker] = useState(false);
 
-    const handleSubmit = () => {
-        // Implement your form submission logic here
-        console.log('First Name:', firstName);
-        console.log('Last Name:', lastName);
-        console.log('Birth Date:', birthDate);
+    const navigation = useNavigation();
+
+    const handleSubmit = async () => {
+        try {
+            const response = await fetch(`${IP_PORT}${API_ROUTE}/users/createProfile`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ firstName, lastName, birthDate }),
+            });
+
+            if (response.ok) {
+                console.log("Profile set up successfully");
+            } else {
+                console.log("Failed to set up profile");
+            }
+        } catch (error) {
+            console.log('Error: ' + error);
+        }
     };
 
     const onChangeDate = (event, selectedDate) => {
         setShowDatePicker(Platform.OS === 'ios');
         if (selectedDate) {
-            setBirthDate(selectedDate);
+            const adjustedDate = new Date(selectedDate.getTime() + selectedDate.getTimezoneOffset() * 60000);
+            setBirthDate(adjustedDate);
         }
     };
 
     const showDatepicker = () => {
-        setShowDatePicker(true);
+        setShowDatePicker(!showDatePicker);
     };
 
-    // Format the date to display in the input field
     const formattedDate = birthDate
         ? `${birthDate.getFullYear()}-${(birthDate.getMonth() + 1).toString().padStart(2, '0')}-${birthDate.getDate().toString().padStart(2, '0')}`
         : '';

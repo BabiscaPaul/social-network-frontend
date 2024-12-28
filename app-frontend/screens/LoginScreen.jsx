@@ -22,9 +22,9 @@ const LoginScreen = () => {
     const handleLogin = async () => {
         try {
             const userData = await login(email, password);
-            if (userData.data.user.firstLogin) {
+            if (userData && userData.data.user.firstLogin) {
                 navigation.navigate('Welcome');
-            } else {
+            } else if (userData && !userData.data.user.firstLogin){
                 navigation.navigate('Home');
             }
         } catch (error) {
