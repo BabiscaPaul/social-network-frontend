@@ -10,9 +10,33 @@ import WelcomeScreen from './screens/WelcomeScreen';
 import SetUpProfile from './screens/SetUpProfile';
 import HomeScreen from './screens/HomeScreen';
 import CreatePostScreen from './screens/CreatePostScreen';
+import ProfileScreen from './screens/ProfileScreen';
+import MessagesScreen from './screens/MessagesScreen';
+import EditProfileScreen from './screens/EditProfileScreen';
 
 const AuthStack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
+const ProfileStack = createNativeStackNavigator();
+
+const ProfileStackNavigator = () => {
+  return (
+    <ProfileStack.Navigator>
+      {/* ProfileScreen shown first */}
+      <ProfileStack.Screen
+        name="ProfileScreen"
+        component={ProfileScreen}
+        options={{ headerShown: false }}
+      />
+
+      {/* Additional screen for editing profile */}
+      <ProfileStack.Screen
+        name="EditProfileScreen"
+        component={EditProfileScreen} // Placeholder for now
+        options={{ headerShown: false }}
+      />
+    </ProfileStack.Navigator>
+  );
+};
 
 const AuthStackNavigator = () => {
   return (
@@ -44,12 +68,29 @@ const AuthStackNavigator = () => {
 const MainTabNavigator = () => {
   return (
     <Tab.Navigator initialRouteName="Home">
-      <Tab.Screen name="Home" component={HomeScreen} />
+      <Tab.Screen 
+        name="Home" 
+        component={HomeScreen} 
+        options={{headerShown: false}}
+      />
       <Tab.Screen
         name="CreatePost"
         component={CreatePostScreen}
+        options={{headerShown: false}}
+      />
+      <Tab.Screen 
+        name="Profile"
+        component={ProfileStackNavigator}
+        options={{headerShown: false}}
+      />
+
+      <Tab.Screen 
+        name="Messages"
+        component={MessagesScreen}
+        options={{headerShown: false}}
       />
     </Tab.Navigator>
+
   );
 };
 

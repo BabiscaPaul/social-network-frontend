@@ -8,19 +8,18 @@ import {
     ActivityIndicator,
     View,
     Image,
-    TouchableOpacity,
+    Dimensions,
 } from 'react-native';
 import { AuthContext } from '../AuthProvider';
 import { API_ROUTE, IP_PORT } from '@env';
 import { useNavigation } from '@react-navigation/native';
 
+const { width } = Dimensions.get('window');
+
 const HomeScreen = () => {
     const [recentPosts, setRecentPosts] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
-
-    const { userData } = useContext(AuthContext);
-    const navigation = useNavigation();
 
     useEffect(() => {
         fetchRecentPosts();
@@ -29,12 +28,7 @@ const HomeScreen = () => {
     const fetchRecentPosts = async () => {
         try {
             setLoading(true);
-            const response = await fetch(`${IP_PORT}${API_ROUTE}/posts/recent`, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            });
+            const response = await fetch(`${IP_PORT}${API_ROUTE}/posts/recent`);
 
             if (!response.ok) {
                 throw new Error('Failed to fetch recent posts');
@@ -68,32 +62,37 @@ const HomeScreen = () => {
 
     return (
         <SafeAreaView style={styles.container}>
-            {/* Create Post Button at the top */}
-            <TouchableOpacity
-                style={styles.createButton}
-                onPress={() => navigation.navigate('CreatePost')}
-            >
-                <Text style={styles.createButtonText}>+ Create Post</Text>
-            </TouchableOpacity>
-
             <FlatList
                 data={recentPosts}
                 keyExtractor={(item) => item._id}
                 renderItem={({ item }) => (
                     <View style={styles.postContainer}>
+                        {/* Post Content */}
                         <Text style={styles.postTitle}>{item.content}</Text>
                         <Text>Posted by: {item.postedBy?.username}</Text>
-                        {item.mediaFiles?.map((filePath, index) => {
-                            const fullPath = `${IP_PORT}${filePath}`;
-                            return (
-                                <Image
-                                    key={index}
-                                    style={styles.postImage}
-                                    source={{ uri: fullPath }}
-                                    resizeMode="cover"
-                                />
-                            );
-                        })}
+
+                        {/* Horizontal Scrollable Images */}
+                        {item.mediaFiles?.length > 0 ? (
+                            <FlatList
+                                data={item.mediaFiles}
+                                horizontal
+                                showsHorizontalScrollIndicator={false}
+                                style={styles.imageList}
+                                keyExtractor={(_, index) => index.toString()}
+                                renderItem={({ item: filePath }) => {
+                                    const fullPath = `${IP_PORT}${filePath}`;
+                                    return (
+                                        <Image
+                                            source={{ uri: fullPath }}
+                                            style={styles.postImage}
+                                            resizeMode="cover"
+                                        />
+                                    );
+                                }}
+                            />
+                        ) : (
+                            <Text style={styles.noImages}>No images for this post.</Text>
+                        )}
                     </View>
                 )}
                 ListEmptyComponent={
@@ -114,33 +113,31 @@ const styles = StyleSheet.create({
         backgroundColor: '#fff',
         padding: 10,
     },
-    createButton: {
-        backgroundColor: 'black',
-        alignSelf: 'flex-start',
-        paddingVertical: 10,
-        paddingHorizontal: 15,
-        borderRadius: 8,
-    },
-    createButtonText: {
-        color: '#fff',
-        fontSize: 16,
-    },
     postContainer: {
         padding: 10,
         borderWidth: 1,
         borderColor: '#ddd',
         borderRadius: 8,
+        marginBottom: 10,
     },
     postTitle: {
         fontWeight: 'bold',
         marginBottom: 6,
         fontSize: 16,
     },
-    postImage: {
-        width: '100%',
-        height: 200,
+    imageList: {
         marginTop: 10,
+    },
+    postImage: {
+        width: width * 0.8,  // 80% of screen width
+        height: 200,
+        marginRight: 10,
         borderRadius: 8,
         backgroundColor: '#f0f0f0',
+    },
+    noImages: {
+        marginTop: 10,
+        fontStyle: 'italic',
+        color: '#999',
     },
 });

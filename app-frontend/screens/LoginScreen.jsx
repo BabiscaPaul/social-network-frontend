@@ -22,11 +22,11 @@ const LoginScreen = () => {
     const handleLogin = async () => {
         try {
             const userData = await login(email, password);
-            if (userData && userData.data.user.firstLogin) {
-                navigation.navigate('Welcome');
-            } else if (userData && !userData.data.user.firstLogin){
-                navigation.navigate('Home');
-            }
+            // if (userData && userData.data.user.firstLogin) {
+            //     navigation.navigate('Welcome');
+            // } else if (userData && !userData.data.user.firstLogin){
+            //     navigation.navigate('Home');
+            // }
         } catch (error) {
             console.error('Login error:', error);
         }
@@ -37,7 +37,7 @@ const LoginScreen = () => {
             <SafeAreaView style={styles.inner}>
                 <View style={styles.header}>
                     <Text style={styles.title}>Log In</Text>
-                    <Text style={styles.subTitle}>Please log in to continue 🎧</Text>
+                    <Text style={styles.subTitle}>Please log in to continue</Text>
                 </View>
 
                 <View style={styles.inputContainer}>

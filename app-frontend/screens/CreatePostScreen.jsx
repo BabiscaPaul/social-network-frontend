@@ -8,8 +8,9 @@ import {
     View,
     TouchableOpacity,
     Image,
+    ScrollView,
 } from 'react-native';
-// import * as ImagePicker from 'expo-image-picker'; 
+// import * as ImagePicker from 'expo-image-picker'; // remember to uncomment if using expo-image-picker
 import { API_ROUTE, IP_PORT } from '@env';
 
 const CreatePostScreen = ({ navigation }) => {
@@ -17,7 +18,6 @@ const CreatePostScreen = ({ navigation }) => {
     const [imageUri, setImageUri] = useState(null);
 
     const pickImage = async () => {
-        // ask for camera roll permissions, then open image picker
         const result = await ImagePicker.launchImageLibraryAsync({
             mediaTypes: ImagePicker.MediaTypeOptions.Images,
             allowsEditing: true,
@@ -35,19 +35,15 @@ const CreatePostScreen = ({ navigation }) => {
             formData.append('content', content);
 
             if (imageUri) {
-                // This is how you append a file in FormData for a typical Node/Express backend with Multer
                 formData.append('mediaFiles', {
                     uri: imageUri,
-                    name: 'post.jpg',  // or your file name
+                    name: 'post.jpg', // or a derived name
                     type: 'image/jpeg',
                 });
             }
 
             const response = await fetch(`${IP_PORT}${API_ROUTE}/posts`, {
                 method: 'POST',
-                headers: {
-                    // Multer usually needs "multipart/form-data" but `fetch` will set the correct boundary automatically if you omit the Content-Type
-                },
                 body: formData,
             });
 
@@ -55,10 +51,6 @@ const CreatePostScreen = ({ navigation }) => {
                 throw new Error('Failed to create post');
             }
 
-            // Optionally parse the returned data if needed
-            // const data = await response.json();
-
-            // Once the post is created, go back to the Home screen (or refresh posts)
             navigation.goBack();
         } catch (error) {
             console.error('Error creating post:', error.message);
@@ -67,29 +59,35 @@ const CreatePostScreen = ({ navigation }) => {
 
     return (
         <SafeAreaView style={styles.container}>
-            <Text style={styles.title}>Create a New Post</Text>
+            <ScrollView contentContainerStyle={styles.content}>
+                <Text style={styles.title}>Create a New Post</Text>
 
-            <TextInput
-                style={styles.textInput}
-                placeholder="Write something..."
-                value={content}
-                onChangeText={setContent}
-                multiline
-            />
+                {/* Text Input */}
+                <TextInput
+                    style={styles.textInput}
+                    placeholder="Write something..."
+                    value={content}
+                    onChangeText={setContent}
+                    multiline
+                />
 
-            {imageUri ? (
-                <Image source={{ uri: imageUri }} style={styles.preview} />
-            ) : (
-                <Text style={styles.noImageText}>No image selected</Text>
-            )}
+                {/* Preview or No Image Text */}
+                {imageUri ? (
+                    <Image source={{ uri: imageUri }} style={styles.preview} />
+                ) : (
+                    <Text style={styles.noImageText}>No image selected</Text>
+                )}
 
-            <TouchableOpacity style={styles.pickButton} onPress={pickImage}>
-                <Text style={styles.pickButtonText}>Pick an Image</Text>
-            </TouchableOpacity>
+                {/* Pick Image Button */}
+                <TouchableOpacity style={styles.pickButton} onPress={pickImage}>
+                    <Text style={styles.pickButtonText}>Pick an Image</Text>
+                </TouchableOpacity>
 
-            <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
-                <Text style={styles.submitButtonText}>Post</Text>
-            </TouchableOpacity>
+                {/* Submit Button */}
+                <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
+                    <Text style={styles.submitButtonText}>Post</Text>
+                </TouchableOpacity>
+            </ScrollView>
         </SafeAreaView>
     );
 };
@@ -99,20 +97,27 @@ export default CreatePostScreen;
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        padding: 16,
+        backgroundColor: '#fff',
+    },
+    content: {
+        alignItems: 'center',
+        paddingHorizontal: 16,
+        paddingVertical: 20,
     },
     title: {
         fontSize: 24,
         fontWeight: '600',
-        marginBottom: 12,
+        marginBottom: 20,
+        alignSelf: 'flex-start', // keeps the title left-aligned
     },
     textInput: {
-        borderWidth: 1,
-        borderColor: '#999',
+        width: '85%',
+        borderWidth: 1.5,
+        borderColor: '#ccc',
         borderRadius: 8,
         padding: 10,
         fontSize: 16,
-        height: 100,
+        minHeight: 100,
         textAlignVertical: 'top',
         marginBottom: 20,
     },
@@ -123,30 +128,35 @@ const styles = StyleSheet.create({
         marginVertical: 8,
     },
     preview: {
-        width: '100%',
+        width: '85%',
         height: 200,
-        marginBottom: 8,
+        marginBottom: 12,
         resizeMode: 'cover',
         borderRadius: 8,
     },
     pickButton: {
-        backgroundColor: '#ccc',
-        padding: 12,
+        width: '85%',
+        backgroundColor: '#000',
+        paddingVertical: 12,
         borderRadius: 8,
-        marginBottom: 20,
         alignItems: 'center',
+        marginBottom: 20,
     },
     pickButtonText: {
+        color: '#fff',
         fontSize: 16,
+        fontWeight: '600',
     },
     submitButton: {
-        backgroundColor: 'black',
-        padding: 14,
+        width: '85%',
+        backgroundColor: '#000',
         borderRadius: 8,
+        paddingVertical: 12,
         alignItems: 'center',
     },
     submitButtonText: {
         color: '#fff',
         fontSize: 18,
+        fontWeight: '600',
     },
 });
