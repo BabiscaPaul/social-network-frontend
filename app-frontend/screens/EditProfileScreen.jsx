@@ -1,5 +1,5 @@
 // EditProfileScreen.js
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import {
     SafeAreaView,
     ScrollView,
@@ -10,17 +10,19 @@ import {
     TouchableOpacity,
     Image,
 } from 'react-native';
-
 import { API_ROUTE, IP_PORT } from '@env';
 import { useNavigation } from '@react-navigation/native';
+import { AuthContext } from '../AuthProvider'; // <-- Make sure the path is correct
 
 const EditProfileScreen = () => {
     const navigation = useNavigation();
+    const { logout } = useContext(AuthContext);
 
     // Form states
     const [username, setUsername] = useState('');
     const [firstName, setFirstName] = useState('');
     const [lastName, setLastName] = useState('');
+    const [bio, setBio] = useState(''); // <-- new bio state
 
     // Optional image picker
     const [profilePicUri, setProfilePicUri] = useState(null);
@@ -38,16 +40,15 @@ const EditProfileScreen = () => {
         }
     };
 
-    // Submit form
+    // Submit form to update user profile
     const handleUpdateProfile = async () => {
         try {
-            // Use FormData to handle text + (optionally) image file
             const formData = new FormData();
-
             // If user left a field blank, the backend will keep the old value
             formData.append('username', username);
             formData.append('firstName', firstName);
             formData.append('lastName', lastName);
+            formData.append('bio', bio); // <-- append bio to the form data
 
             // If the user picked a new profile picture
             if (profilePicUri) {
@@ -59,16 +60,11 @@ const EditProfileScreen = () => {
                 });
             }
 
-            // Make the request
-            const response = await fetch(
-                `${IP_PORT}${API_ROUTE}/users/updateProfile`,
-                {
-                    method: 'POST',
-                    body: formData,
-                    // NOTE: Omit 'Content-Type': 'multipart/form-data'
-                    // because fetch + FormData will set the correct headers automatically
-                }
-            );
+            const response = await fetch(`${IP_PORT}${API_ROUTE}/users/updateProfile`, {
+                method: 'POST',
+                body: formData,
+                // Omit 'Content-Type' to let fetch + FormData set correct boundaries
+            });
 
             if (!response.ok) {
                 throw new Error('Failed to update profile');
@@ -81,9 +77,17 @@ const EditProfileScreen = () => {
         }
     };
 
+    // Handle sign out
+    const handleSignOut = async () => {
+        try {
+            await logout();
+        } catch (error) {
+            console.log('Error logging out:', error);
+        }
+    };
+
     return (
         <SafeAreaView style={styles.container}>
-            {/* ScrollView in case content grows */}
             <ScrollView contentContainerStyle={styles.content}>
                 {/* Profile Picture Preview */}
                 <View style={styles.imageContainer}>
@@ -91,9 +95,7 @@ const EditProfileScreen = () => {
                         <Image source={{ uri: profilePicUri }} style={styles.profileImage} />
                     ) : (
                         <Image
-                            source={{
-                                uri: 'https://via.placeholder.com/100/CCC/FFF?text=Avatar',
-                            }}
+                            source={{ uri: 'https://via.placeholder.com/100/CCC/FFF?text=Avatar' }}
                             style={styles.profileImage}
                         />
                     )}
@@ -106,7 +108,7 @@ const EditProfileScreen = () => {
                 <View style={styles.inputContainer}>
                     <Text style={styles.label}>Username</Text>
                     <TextInput
-                        autoCapitalize='none'
+                        autoCapitalize="none"
                         style={styles.input}
                         placeholder="Type new username..."
                         value={username}
@@ -118,7 +120,7 @@ const EditProfileScreen = () => {
                 <View style={styles.inputContainer}>
                     <Text style={styles.label}>First Name</Text>
                     <TextInput
-                        autoCapitalize='none'
+                        autoCapitalize="none"
                         style={styles.input}
                         placeholder="Type first name..."
                         value={firstName}
@@ -130,7 +132,7 @@ const EditProfileScreen = () => {
                 <View style={styles.inputContainer}>
                     <Text style={styles.label}>Last Name</Text>
                     <TextInput
-                        autoCapitalize='none'
+                        autoCapitalize="none"
                         style={styles.input}
                         placeholder="Type last name..."
                         value={lastName}
@@ -138,9 +140,27 @@ const EditProfileScreen = () => {
                     />
                 </View>
 
-                {/* Submit Button */}
+                {/* Bio (new field) */}
+                <View style={styles.inputContainer}>
+                    <Text style={styles.label}>Bio</Text>
+                    <TextInput
+                        autoCapitalize="none"
+                        style={[styles.input, styles.bioInput]}
+                        placeholder="Tell us about yourself..."
+                        value={bio}
+                        onChangeText={setBio}
+                        multiline // allow multiple lines
+                    />
+                </View>
+
+                {/* Save Changes Button */}
                 <TouchableOpacity style={styles.saveBtn} onPress={handleUpdateProfile}>
                     <Text style={styles.saveBtnText}>Save Changes</Text>
+                </TouchableOpacity>
+
+                {/* Sign Out Button */}
+                <TouchableOpacity style={styles.signOutBtn} onPress={handleSignOut}>
+                    <Text style={styles.signOutBtnText}>Sign Out</Text>
                 </TouchableOpacity>
             </ScrollView>
         </SafeAreaView>
@@ -154,14 +174,13 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: '#fff',
     },
-    // This container keeps the content centered and narrower
     content: {
         alignItems: 'center',
         paddingVertical: 20,
         paddingHorizontal: 16,
     },
 
-    // Image
+    // Profile Image
     imageContainer: {
         alignItems: 'center',
         marginBottom: 20,
@@ -188,7 +207,7 @@ const styles = StyleSheet.create({
 
     // Inputs
     inputContainer: {
-        width: '85%',    // narrower width
+        width: '85%',
         marginBottom: 15,
     },
     label: {
@@ -206,23 +225,14 @@ const styles = StyleSheet.create({
         fontSize: 16,
         color: '#000',
     },
-
-    datePickerContainer: {
-        borderWidth: 1.5,
-        borderColor: '#ccc',
-        borderRadius: 8,
-        paddingHorizontal: 12,
-        height: 45,
-        justifyContent: 'center',
-    },
-    inputText: {
-        fontSize: 16,
-        color: '#000',
+    bioInput: {
+        height: 70, // give a bit more space for multiline text
+        textAlignVertical: 'top',
     },
 
     // Save Button
     saveBtn: {
-        width: '85%',   // narrower width
+        width: '85%',
         backgroundColor: '#000',
         borderRadius: 8,
         paddingVertical: 12,
@@ -230,6 +240,21 @@ const styles = StyleSheet.create({
         marginTop: 10,
     },
     saveBtnText: {
+        color: '#fff',
+        fontSize: 18,
+        fontWeight: '600',
+    },
+
+    // Sign Out Button (red)
+    signOutBtn: {
+        width: '85%',
+        backgroundColor: 'red',
+        borderRadius: 8,
+        paddingVertical: 12,
+        alignItems: 'center',
+        marginTop: 20,
+    },
+    signOutBtnText: {
         color: '#fff',
         fontSize: 18,
         fontWeight: '600',

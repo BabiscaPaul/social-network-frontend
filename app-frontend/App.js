@@ -13,6 +13,8 @@ import CreatePostScreen from './screens/CreatePostScreen';
 import ProfileScreen from './screens/ProfileScreen';
 import MessagesScreen from './screens/MessagesScreen';
 import EditProfileScreen from './screens/EditProfileScreen';
+import MyPosts from './screens/MyPosts';
+import SharedPosts from './screens/SharedPosts';
 
 const AuthStack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -31,7 +33,19 @@ const ProfileStackNavigator = () => {
       {/* Additional screen for editing profile */}
       <ProfileStack.Screen
         name="EditProfileScreen"
-        component={EditProfileScreen} // Placeholder for now
+        component={EditProfileScreen} 
+        options={{ headerShown: false }}
+      />
+
+      <ProfileStack.Screen
+        name="MyPostsScreen"
+        component={MyPosts} 
+        options={{ headerShown: false }}
+      />
+
+      <ProfileStack.Screen
+        name="SharedPostsScreen"
+        component={SharedPosts}
         options={{ headerShown: false }}
       />
     </ProfileStack.Navigator>

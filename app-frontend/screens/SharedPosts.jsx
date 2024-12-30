@@ -1,4 +1,4 @@
-// HomeScreen.js
+// SharedPosts.js
 import React, { useState, useEffect } from 'react';
 import {
     SafeAreaView,
@@ -18,8 +18,9 @@ import { API_ROUTE, IP_PORT } from '@env';
 
 const { width } = Dimensions.get('window');
 
-const HomeScreen = () => {
-    const [recentPosts, setRecentPosts] = useState([]);
+const SharedPosts = () => {
+    const [userId, setUserId] = useState(null);
+    const [sharedPosts, setSharedPosts] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [commentInput, setCommentInput] = useState({});
@@ -27,48 +28,73 @@ const HomeScreen = () => {
     const [likedPosts, setLikedPosts] = useState({});
 
     useEffect(() => {
-        fetchRecentPosts();
-    }, []);
-
-    const fetchRecentPosts = async () => {
-        try {
+        const fetchUserAndSharedPosts = async () => {
             setLoading(true);
             setError(null);
+            try {
+                // Fetch the current user's information to get userId
+                const userResponse = await fetch(`${IP_PORT}${API_ROUTE}/users/me`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        // Include authentication headers if required
+                        // 'Authorization': `Bearer ${token}`,
+                    },
+                });
 
-            const response = await fetch(`${IP_PORT}${API_ROUTE}/posts/recent`, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                    // Include authentication headers if required
-                    // 'Authorization': `Bearer ${token}`,
-                },
-            });
+                if (!userResponse.ok) {
+                    throw new Error('Failed to fetch user information');
+                }
 
-            if (!response.ok) {
-                throw new Error('Failed to fetch recent posts');
+                const userData = await userResponse.json();
+                console.log('User Data:', userData);
+
+                // Extract userId from the response
+                // Adjust the path based on your actual response structure
+                const fetchedUserId = userData.data.user._id;
+                if (!fetchedUserId) {
+                    throw new Error('User ID not found in response');
+                }
+                setUserId(fetchedUserId);
+
+                // Fetch the shared posts using the fetched userId
+                const sharedPostsResponse = await fetch(`${IP_PORT}${API_ROUTE}/posts/sharedPosts/${fetchedUserId}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        // Include authentication headers if required
+                        // 'Authorization': `Bearer ${token}`,
+                    },
+                });
+
+                if (!sharedPostsResponse.ok) {
+                    throw new Error('Failed to fetch shared posts');
+                }
+
+                const sharedPostsData = await sharedPostsResponse.json();
+                console.log('Shared Posts Data:', sharedPostsData);
+
+                // Ensure that data.data.posts is an array
+                if (Array.isArray(sharedPostsData.data.posts)) {
+                    setSharedPosts(sharedPostsData.data.posts);
+                } else {
+                    throw new Error('Invalid data format received for shared posts');
+                }
+            } catch (err) {
+                setError(err.message || 'Something went wrong!');
+                console.error('Error:', err);
+            } finally {
+                setLoading(false);
             }
+        };
 
-            const data = await response.json();
-            console.log('Recent Posts =>', data);
-
-            // Ensure that data.data.posts is an array
-            if (Array.isArray(data.data.posts)) {
-                setRecentPosts(data.data.posts);
-            } else {
-                throw new Error('Invalid data format received from server');
-            }
-        } catch (err) {
-            setError(err.message || 'Something went wrong!');
-            console.error('Error fetching recent posts:', err);
-        } finally {
-            setLoading(false);
-        }
-    };
+        fetchUserAndSharedPosts();
+    }, []);
 
     const handleSharePress = async (postId) => {
         try {
             const payload = {
-                "share": true,
+                share: true,
             };
 
             const response = await fetch(`${IP_PORT}${API_ROUTE}/posts/${postId}`, {
@@ -91,7 +117,7 @@ const HomeScreen = () => {
             // Check if result.data.post exists and has _id
             if (result.data && result.data.post && result.data.post._id) {
                 const updatedPost = result.data.post;
-                setRecentPosts((prevPosts) =>
+                setSharedPosts((prevPosts) =>
                     prevPosts.map((post) => (post._id === postId ? updatedPost : post))
                 );
             } else {
@@ -196,24 +222,24 @@ const HomeScreen = () => {
     };
 
     const handleLikePress = async (postId) => {
-        const postIndex = recentPosts.findIndex((post) => post._id === postId);
+        const postIndex = sharedPosts.findIndex((post) => post._id === postId);
 
         if (postIndex === -1) {
             console.error(`Post with ID ${postId} not found`);
             return;
         }
 
-        const currentPost = recentPosts[postIndex];
+        const currentPost = sharedPosts[postIndex];
         const isLiked = likedPosts[postId] || false;
         const likeStatus = !isLiked;
 
-        const updatedPosts = [...recentPosts];
+        const updatedPosts = [...sharedPosts];
         updatedPosts[postIndex] = {
             ...currentPost,
             likesCount: currentPost.likesCount + (likeStatus ? 1 : -1),
         };
 
-        setRecentPosts(updatedPosts);
+        setSharedPosts(updatedPosts);
         setLikedPosts((prev) => ({ ...prev, [postId]: likeStatus }));
 
         try {
@@ -235,13 +261,13 @@ const HomeScreen = () => {
             console.error(`Error updating like status for post ${postId}:`, error);
 
             // Revert the like status in case of error
-            const revertedPosts = [...recentPosts];
+            const revertedPosts = [...sharedPosts];
             revertedPosts[postIndex] = {
                 ...currentPost,
                 likesCount: currentPost.likesCount + (likeStatus ? -1 : 1),
             };
 
-            setRecentPosts(revertedPosts);
+            setSharedPosts(revertedPosts);
             setLikedPosts((prev) => ({ ...prev, [postId]: isLiked }));
         }
     };
@@ -250,7 +276,7 @@ const HomeScreen = () => {
         return (
             <SafeAreaView style={styles.centeredContainer}>
                 <ActivityIndicator size="large" color="#000" />
-                <Text style={styles.loadingText}>Loading posts...</Text>
+                <Text style={styles.loadingText}>Loading shared posts...</Text>
             </SafeAreaView>
         );
     }
@@ -266,7 +292,7 @@ const HomeScreen = () => {
     return (
         <SafeAreaView style={styles.container}>
             <FlatList
-                data={recentPosts}
+                data={sharedPosts}
                 keyExtractor={(item) => item._id}
                 renderItem={({ item }) => {
                     if (!item || !item._id) return null; // Safeguard to prevent errors
@@ -373,17 +399,17 @@ const HomeScreen = () => {
                 }}
                 ListEmptyComponent={
                     <View style={styles.centeredContainer}>
-                        <Text style={styles.noPostsText}>No posts available.</Text>
+                        <Text style={styles.noPostsText}>No shared posts available.</Text>
                     </View>
                 }
-                contentContainerStyle={recentPosts.length === 0 && styles.flatListContainer}
+                contentContainerStyle={sharedPosts.length === 0 && styles.flatListContainer}
             />
         </SafeAreaView>
     );
 
 };
 
-export default HomeScreen;
+export default SharedPosts;
 
 //-------------------------------------
 // Styles

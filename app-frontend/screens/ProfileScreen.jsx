@@ -1,5 +1,5 @@
 // ProfileScreen.js
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
     SafeAreaView,
     View,
@@ -7,40 +7,28 @@ import {
     StyleSheet,
     ActivityIndicator,
     Image,
-    Dimensions,
     ScrollView,
     TouchableOpacity,
 } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native'; // Import the hook for navigation
 import { API_ROUTE, IP_PORT } from '@env';
-import { useCallback } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
-
-
-const { width } = Dimensions.get('window');
 
 const ProfileScreen = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
-    // Profile and Posts state
+    // Profile state
     const [profileData, setProfileData] = useState(null);
-    const [userPosts, setUserPosts] = useState([]);
 
     const navigation = useNavigation();
     const route = useRoute();
 
     useFocusEffect(
         useCallback(() => {
-            fetchUserProfile();  // re-fetch data each time user focuses on Profile
+            fetchUserProfile();  // Re-fetch data each time user focuses on Profile
         }, [])
     );
-
-    useEffect(() => {
-        if (profileData) {
-            fetchUserPosts();
-        }
-    }, [profileData]);
 
     // 1) Fetch the user’s profile
     const fetchUserProfile = async () => {
@@ -67,32 +55,6 @@ const ProfileScreen = () => {
         } catch (err) {
             setError(err.message || 'Something went wrong fetching profile!');
             console.error('Error fetching user profile:', err);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    // 2) Fetch the user’s posts
-    const fetchUserPosts = async () => {
-        try {
-            setLoading(true);
-            setError(null);
-
-            const response = await fetch(`${IP_PORT}${API_ROUTE}/posts/myPosts`);
-
-            if (!response.ok) {
-                throw new Error('Failed to fetch user posts');
-            }
-
-            const data = await response.json();
-            console.log('My Posts =>', data);
-
-            // Adjust to match your backend’s shape:
-            // e.g., if data.data.posts is the array
-            setUserPosts(data.data.posts || data.posts || []);
-        } catch (err) {
-            setError(err.message || 'Something went wrong fetching posts!');
-            console.error('Error fetching user posts:', err);
         } finally {
             setLoading(false);
         }
@@ -147,31 +109,23 @@ const ProfileScreen = () => {
                         <Text style={styles.editButtonText}>Edit Profile</Text>
                     </TouchableOpacity>
 
-                    {/* 3) Display the user’s posts */}
-                    <View style={styles.postsContainer}>
-                        <Text style={styles.postsHeading}>My Posts</Text>
-                        {userPosts.length === 0 ? (
-                            <Text style={styles.noPostsText}>No posts yet!</Text>
-                        ) : (
-                            userPosts.map((post) => (
-                                <View style={styles.postCard} key={post._id}>
-                                    <Text style={styles.postContent}>{post.content}</Text>
-                                    {/* If you have images, display them */}
-                                    {post.mediaFiles?.map((filePath, index) => {
-                                        const fullPath = `${IP_PORT}${filePath}`;
-                                        return (
-                                            <Image
-                                                key={index}
-                                                style={styles.postImage}
-                                                source={{ uri: fullPath }}
-                                                resizeMode="cover"
-                                            />
-                                        );
-                                    })}
-                                </View>
-                            ))
-                        )}
-                    </View>
+                    {/* My Posts Button */}
+                    <TouchableOpacity
+                        style={styles.editButton}
+                        onPress={() => navigation.navigate('MyPostsScreen')}
+                    >
+                        <Text style={styles.editButtonText}>My Posts</Text>
+                    </TouchableOpacity>
+
+                    {/* Shared Posts Button */}
+                    <TouchableOpacity
+                        style={styles.editButton}
+                        onPress={() => navigation.navigate('SharedPostsScreen')} 
+                    >
+                        <Text style={styles.editButtonText}>Shared Posts</Text>
+                    </TouchableOpacity>
+
+                    {/* You can add more profile-related actions here */}
                 </ScrollView>
             ) : (
                 <View style={styles.centeredContainer}>
@@ -274,41 +228,5 @@ const styles = StyleSheet.create({
         fontWeight: '600',
     },
 
-    // Posts Section
-    postsContainer: {
-        width: '85%',
-    },
-    postsHeading: {
-        fontSize: 20,
-        fontWeight: '600',
-        marginBottom: 10,
-    },
-    noPostsText: {
-        textAlign: 'center',
-        color: '#999',
-        marginTop: 10,
-    },
-    // Individual post card
-    postCard: {
-        backgroundColor: '#fff',
-        borderRadius: 8,
-        padding: 15,
-        marginBottom: 10,
-        shadowColor: '#000',
-        shadowOpacity: 0.05,
-        shadowRadius: 3,
-        shadowOffset: { width: 0, height: 1 },
-        elevation: 1,
-    },
-    postContent: {
-        fontSize: 16,
-        color: '#333',
-        marginBottom: 8,
-    },
-    postImage: {
-        width: '100%',
-        height: 200,
-        borderRadius: 6,
-        backgroundColor: '#eee',
-    },
+    // You can add more styles as needed
 });
