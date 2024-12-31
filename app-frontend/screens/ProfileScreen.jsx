@@ -26,7 +26,7 @@ const ProfileScreen = () => {
 
     useFocusEffect(
         useCallback(() => {
-            fetchUserProfile();  // Re-fetch data each time user focuses on Profile
+            fetchUserProfile();  
         }, [])
     );
 
@@ -123,6 +123,13 @@ const ProfileScreen = () => {
                         onPress={() => navigation.navigate('SharedPostsScreen')} 
                     >
                         <Text style={styles.editButtonText}>Shared Posts</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={styles.editButton}
+                        onPress={() => navigation.navigate('FriendsScreen')}
+                    >
+                        <Text style={styles.editButtonText}>Friends</Text>
                     </TouchableOpacity>
 
                     {/* You can add more profile-related actions here */}

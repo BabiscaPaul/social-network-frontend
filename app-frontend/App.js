@@ -15,10 +15,61 @@ import MessagesScreen from './screens/MessagesScreen';
 import EditProfileScreen from './screens/EditProfileScreen';
 import MyPosts from './screens/MyPosts';
 import SharedPosts from './screens/SharedPosts';
+import FriendsScreen from './screens/FriendsScreen';
+import SearchScreen from './screens/SearchScreen';
+import NotificationScreen from './screens/NotificationScreen';
+import ChatDetailScreen from './screens/ChatDetailScreen';
 
 const AuthStack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 const ProfileStack = createNativeStackNavigator();
+const HomeStack = createNativeStackNavigator(); 
+const ChatStack = createNativeStackNavigator();
+
+const HomeStackNavigator = () => {
+  return (
+    <HomeStack.Navigator>
+      {/* HomeScreen is the initial screen in the Home stack */}
+      <HomeStack.Screen
+        name="HomeScreen"
+        component={HomeScreen}
+        options={{ headerShown: true, headerTitle: "" }} // Header is managed inside HomeScreen
+      />
+      {/* NotificationScreen can be navigated to from HomeScreen */}
+      <HomeStack.Screen
+        name="NotificationScreen"
+        component={NotificationScreen}
+        options={{
+          title: 'Notifications', // Customize the header title
+          headerBackTitle: 'Back', // Customize the back button text
+          headerTitle: ""
+        }}
+      />
+    </HomeStack.Navigator>
+  );
+};
+
+const ChatStackNavigator = () => {
+  return (
+    <ChatStack.Navigator>
+      {/* HomeScreen is the initial screen in the Home stack */}
+      <ChatStack.Screen
+        name="Chats"
+        component={MessagesScreen}
+      />
+      {/* NotificationScreen can be navigated to from HomeScreen */}
+      <ChatStack.Screen
+        name="ChatDetail"
+        component={ChatDetailScreen}
+        options={{
+          headerBackTitle: 'Back',
+          headerTitle: ""
+        }}
+      />
+    </ChatStack.Navigator>
+  );
+};
+
 
 const ProfileStackNavigator = () => {
   return (
@@ -46,6 +97,12 @@ const ProfileStackNavigator = () => {
       <ProfileStack.Screen
         name="SharedPostsScreen"
         component={SharedPosts}
+        options={{ headerShown: false }}
+      />
+
+      <ProfileStack.Screen
+        name="FriendsScreen"
+        component={FriendsScreen}
         options={{ headerShown: false }}
       />
     </ProfileStack.Navigator>
@@ -82,31 +139,40 @@ const AuthStackNavigator = () => {
 const MainTabNavigator = () => {
   return (
     <Tab.Navigator initialRouteName="Home">
-      <Tab.Screen 
-        name="Home" 
-        component={HomeScreen} 
-        options={{headerShown: false}}
+      {/* Replace HomeScreen with HomeStackNavigator */}
+      <Tab.Screen
+        name="Home"
+        component={HomeStackNavigator}
+        options={{ headerShown: false }}
       />
+
+      <Tab.Screen
+        name="Search"
+        component={SearchScreen}
+        options={{ headerShown: false }}
+      />
+
+      <Tab.Screen
+        name="Messages"
+        component={ChatStackNavigator}
+        options={{ headerShown: false }}
+      />
+
       <Tab.Screen
         name="CreatePost"
         component={CreatePostScreen}
-        options={{headerShown: false}}
+        options={{ headerShown: false }}
       />
-      <Tab.Screen 
+
+      <Tab.Screen
         name="Profile"
         component={ProfileStackNavigator}
-        options={{headerShown: false}}
-      />
-
-      <Tab.Screen 
-        name="Messages"
-        component={MessagesScreen}
-        options={{headerShown: false}}
+        options={{ headerShown: false }}
       />
     </Tab.Navigator>
-
   );
 };
+
 
 const RootNavigator = () => {
   const { isLoggedIn } = useContext(AuthContext);

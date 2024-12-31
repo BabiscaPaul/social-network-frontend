@@ -15,6 +15,10 @@ import {
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { API_ROUTE, IP_PORT } from '@env';
+import { useFocusEffect } from '@react-navigation/native';
+import { useCallback } from 'react';
+import { useLayoutEffect } from 'react';
+import { useNavigation } from '@react-navigation/native';
 
 const { width } = Dimensions.get('window');
 
@@ -26,9 +30,51 @@ const HomeScreen = () => {
     const [commentsByPost, setCommentsByPost] = useState({});
     const [likedPosts, setLikedPosts] = useState({});
 
-    useEffect(() => {
-        fetchRecentPosts();
-    }, []);
+    const navigation = useNavigation(); // Initialize navigation
+    const handleNotificationsPress = async () => {
+        try {
+            const response = await fetch(`${IP_PORT}${API_ROUTE}/notifications/`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    // Include authentication headers if required
+                    // 'Authorization': `Bearer your-token-here`,
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch notifications');
+            }
+
+            const data = await response.json();
+            console.log('Notifications Data:', data);
+
+            // Navigate to NotificationScreen with notifications data
+            navigation.navigate('NotificationScreen', { notifications: data.data.notifications });
+        } catch (error) {
+            console.error('Error fetching notifications:', error);
+            Alert.alert('Error', `Failed to fetch notifications: ${error.message}`);
+        }
+    };
+
+    useLayoutEffect(() => {
+        navigation.setOptions({
+            headerRight: () => (
+                <TouchableOpacity
+                    onPress={handleNotificationsPress}
+                    style={{ marginRight: 15 }}
+                >
+                    <Ionicons name="notifications-outline" size={24} color="#000" />
+                </TouchableOpacity>
+            ),
+        });
+    }, [navigation]);
+
+    useFocusEffect(
+        useCallback(() => {
+            fetchRecentPosts();  
+        }, [])
+    );
 
     const fetchRecentPosts = async () => {
         try {
