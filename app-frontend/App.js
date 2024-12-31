@@ -19,6 +19,7 @@ import FriendsScreen from './screens/FriendsScreen';
 import SearchScreen from './screens/SearchScreen';
 import NotificationScreen from './screens/NotificationScreen';
 import ChatDetailScreen from './screens/ChatDetailScreen';
+import CreateChatScreen from './screens/CreateChatScreen';
 
 const AuthStack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -61,6 +62,15 @@ const ChatStackNavigator = () => {
       <ChatStack.Screen
         name="ChatDetail"
         component={ChatDetailScreen}
+        options={{
+          headerBackTitle: 'Back',
+          headerTitle: ""
+        }}
+      />
+
+      <ChatStack.Screen 
+        name="CreateChat"
+        component={CreateChatScreen}
         options={{
           headerBackTitle: 'Back',
           headerTitle: ""

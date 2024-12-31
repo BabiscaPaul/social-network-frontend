@@ -1,6 +1,6 @@
 // MessagesScreen.js
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
     SafeAreaView,
     View,
@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { IP_PORT, API_ROUTE } from '@env'; // Ensure these are correctly set in your .env file
+import { useFocusEffect } from '@react-navigation/native';
 
 const MessagesScreen = ({ navigation }) => {
     const [chats, setChats] = useState([]);
@@ -37,31 +38,41 @@ const MessagesScreen = ({ navigation }) => {
                 },
             });
 
-            if (!response.ok) {
-                throw new Error('Failed to fetch chats');
-            }
+            if (response.ok) {
+                const data = await response.json();
+                console.log('Chats Data:', data);
 
-            const data = await response.json();
-            console.log('Chats Data:', data);
-
-            // Validate response structure
-            if (data.status === 'success' && Array.isArray(data.data.chats)) {
-                setChats(data.data.chats);
+                // Validate response structure
+                if (data.status === 'success' && Array.isArray(data.data.chats)) {
+                    setChats(data.data.chats);
+                } else {
+                    throw new Error('Invalid data format received from server');
+                }
+            } else if (response.status === 404) {
+                // 404 indicates no chats found
+                setChats([]); // Set chats to empty array
+                console.log('No chats found.');
             } else {
-                throw new Error('Invalid data format received from server');
+                // Other error statuses
+                throw new Error(`Failed to fetch chats: ${response.status} ${response.statusText}`);
             }
         } catch (err) {
             console.error('Error fetching chats:', err);
             setError(err.message || 'Something went wrong!');
-            Alert.alert('Error', `Failed to fetch chats: ${err.message}`);
+            // Show alert only for errors other than 404
+            if (err.message && !err.message.includes('404')) {
+                Alert.alert('Error', `Failed to fetch chats: ${err.message}`);
+            }
         } finally {
             setLoading(false);
         }
     };
 
-    useEffect(() => {
-        fetchChats();
-    }, []);
+    useFocusEffect(
+        useCallback(() => {
+            fetchChats();
+        }, [])
+    );
 
     /**
      * Handles the press event on a chat item.
@@ -82,32 +93,35 @@ const MessagesScreen = ({ navigation }) => {
                 },
             });
 
-            if (!response.ok) {
-                throw new Error('Failed to fetch messages');
-            }
+            if (response.ok) {
+                const data = await response.json();
+                console.log('Messages Data:', data);
 
-            const data = await response.json();
-            console.log('Messages Data:', data);
+                // Validate response structure
+                if (data.status === 'success' && Array.isArray(data.data.messages)) {
+                    // Extract usernames
+                    const user1Username = chat.user1.username;
+                    const user2Username = chat.user2.username;
+                    const id1 = chat.user1._id;
+                    const id2 = chat.user2._id;
 
-            // Validate response structure
-            if (data.status === 'success' && Array.isArray(data.data.messages)) {
-                // Extract usernames
-                const user1Username = chat.user1.username;
-                const user2Username = chat.user2.username;
-                const id1 = chat.user1._id;
-                const id2 = chat.user2._id;
-
-                // Navigate to ChatDetailScreen with chatId, messages, and usernames
-                navigation.navigate('ChatDetail', {
-                    chatId: chat._id,
-                    messages: data.data.messages,
-                    user1Username: user1Username,
-                    user2Username: user2Username,
-                    user1Id: id1, 
-                    user2Id: id2,
-                });
+                    // Navigate to ChatDetailScreen with chatId, messages, and usernames
+                    navigation.navigate('ChatDetail', {
+                        chatId: chat._id,
+                        messages: data.data.messages,
+                        user1Username: user1Username,
+                        user2Username: user2Username,
+                        user1Id: id1,
+                        user2Id: id2,
+                    });
+                } else {
+                    throw new Error('Invalid data format received from server');
+                }
+            } else if (response.status === 404) {
+                // 404 indicates no messages found for this chat
+                Alert.alert('No Messages', 'This chat has no messages yet.');
             } else {
-                throw new Error('Invalid data format received from server');
+                throw new Error(`Failed to fetch messages: ${response.status} ${response.statusText}`);
             }
         } catch (err) {
             console.error('Error fetching messages:', err);
@@ -174,7 +188,7 @@ const MessagesScreen = ({ navigation }) => {
         return (
             <View style={styles.emptyContainer}>
                 <Ionicons name="chatbubble-ellipses-outline" size={60} color="#999" />
-                <Text style={styles.emptyText}>No chats available. Start a new conversation!</Text>
+                <Text style={styles.emptyText}>No chats created yet. Start a new conversation!</Text>
                 <TouchableOpacity
                     style={styles.createChatButton}
                     onPress={handleCreateNewChat}
@@ -190,8 +204,8 @@ const MessagesScreen = ({ navigation }) => {
      */
     const handleCreateNewChat = () => {
         console.log('Create new chat button pressed');
-        // TODO: Implement navigation to CreateChatScreen when ready
-        // navigation.navigate('CreateChat'); // Assuming you have a CreateChatScreen
+        // Navigate to CreateChatScreen
+        navigation.navigate('CreateChat'); // Ensure that 'CreateChat' is correctly registered in your navigator
     };
 
     return (
@@ -320,10 +334,10 @@ const styles = StyleSheet.create({
         padding: 20,
     },
     emptyText: {
-        marginTop: 15,
         fontSize: 18,
-        color: '#999',
+        color: '#777',
         textAlign: 'center',
+        marginTop: 15,
     },
     createChatButton: {
         marginTop: 20,
