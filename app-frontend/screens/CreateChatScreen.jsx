@@ -47,7 +47,7 @@ const CreateChatScreen = () => {
                 throw new Error('Invalid data format received from server');
             }
         } catch (err) {
-            console.error('Error fetching current user:', err);
+            console.error('Error fetching current user:', err.message);
             setError(err.message || 'Something went wrong!');
             Alert.alert('Error', `Failed to fetch user data: ${err.message}`);
         }
@@ -88,7 +88,7 @@ const CreateChatScreen = () => {
                 throw new Error('Invalid data format received from server');
             }
         } catch (err) {
-            console.error('Error fetching friends:', err);
+            console.error('Error fetching friends:', err.message);
             setError(err.message || 'Something went wrong!');
             Alert.alert('Error', `Failed to fetch friends: ${err.message}`);
         } finally {
@@ -147,7 +147,7 @@ const CreateChatScreen = () => {
             //     throw new Error('Invalid data format received from server');
             // }
         } catch (err) {
-            console.error('Error creating chat:', err);
+            console.error('Error creating chat:', err.message);
             Alert.alert('Error', `Failed to create chat: ${err.message}`);
         } finally {
             setLoading(false);
@@ -160,15 +160,24 @@ const CreateChatScreen = () => {
      * @returns {JSX.Element} - The rendered friend item.
      */
     const renderFriend = ({ item }) => (
-        <View style={styles.friendItem}>
-            <Text style={styles.friendName}>{item.username}</Text>
+        <TouchableOpacity style={styles.friendItem}>
+            {/* Avatar Circle with Initial */}
+            <View style={styles.friendInfo}>
+                <View style={styles.avatarContainer}>
+                    <Text style={styles.avatarText}>
+                        {item.username.charAt(0).toUpperCase()}
+                    </Text>
+                </View>
+                <Text style={styles.friendName}>{item.username}</Text>
+            </View>
+
             <TouchableOpacity
                 style={styles.createChatButton}
                 onPress={() => handleCreateChat(item)}
             >
                 <Text style={styles.buttonText}>Create Chat</Text>
             </TouchableOpacity>
-        </View>
+        </TouchableOpacity>
     );
 
     /**
@@ -220,7 +229,7 @@ export default CreateChatScreen;
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#fff',
+        backgroundColor: '#fafafa',
         padding: 16,
     },
     flatListContainer: {
@@ -230,60 +239,119 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        paddingVertical: 12,
-        paddingHorizontal: 16,
-        borderBottomWidth: 1,
-        borderBottomColor: '#e0e0e0',
+        padding: 16,
+        backgroundColor: '#ffffff',
+        marginBottom: 12,
+        borderRadius: 16,
+        // Enhanced shadow for depth
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
+        elevation: 3,
+        // Subtle border for definition
+        borderWidth: 1,
+        borderColor: 'rgba(0, 0, 0, 0.05)',
+    },
+    friendInfo: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    avatarContainer: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: '#3b82f6',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 12,
+        // Subtle shadow for avatar
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.15,
+        shadowRadius: 3,
+        elevation: 2,
+    },
+    avatarText: {
+        color: '#fff',
+        fontSize: 16,
+        fontWeight: '600',
     },
     friendName: {
         fontSize: 16,
-        color: '#333',
+        color: '#1a1a1a',
+        fontWeight: '500',
+        letterSpacing: 0.2,
     },
     createChatButton: {
-        backgroundColor: '#4CAF50',
-        paddingVertical: 6,
-        paddingHorizontal: 12,
-        borderRadius: 20,
+        backgroundColor: '#2563eb',
+        paddingVertical: 8,
+        paddingHorizontal: 16,
+        borderRadius: 12,
+        // Subtle shadow for button
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 2,
     },
     buttonText: {
         color: '#fff',
         fontSize: 14,
+        fontWeight: '600',
+        letterSpacing: 0.3,
     },
     loaderContainer: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
+        backgroundColor: '#fafafa',
     },
     errorContainer: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        paddingHorizontal: 20,
+        padding: 32,
+        backgroundColor: '#fafafa',
     },
     errorText: {
-        fontSize: 18,
-        color: '#F44336',
-        marginBottom: 10,
+        fontSize: 17,
+        color: '#ef4444',
+        marginBottom: 16,
         textAlign: 'center',
+        letterSpacing: 0.3,
+        lineHeight: 24,
     },
     retryButton: {
-        backgroundColor: '#4CAF50',
-        paddingVertical: 10,
-        paddingHorizontal: 20,
-        borderRadius: 5,
+        backgroundColor: '#2563eb',
+        paddingVertical: 12,
+        paddingHorizontal: 24,
+        borderRadius: 12,
+        // Enhanced shadow for retry button
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.15,
+        shadowRadius: 8,
+        elevation: 4,
     },
     retryButtonText: {
         color: '#fff',
         fontSize: 16,
-        fontWeight: 'bold',
+        fontWeight: '600',
+        letterSpacing: 0.5,
     },
     noFriendsContainer: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
+        padding: 32,
     },
     noFriendsText: {
         fontSize: 18,
-        color: '#777',
+        color: '#666',
+        textAlign: 'center',
+        letterSpacing: 0.3,
+        lineHeight: 26,
+        maxWidth: '80%',
     },
 });

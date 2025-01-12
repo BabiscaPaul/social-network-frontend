@@ -20,12 +20,16 @@ import SearchScreen from './screens/SearchScreen';
 import NotificationScreen from './screens/NotificationScreen';
 import ChatDetailScreen from './screens/ChatDetailScreen';
 import CreateChatScreen from './screens/CreateChatScreen';
+import UserProfile from './screens/UserProfile';
 
 const AuthStack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 const ProfileStack = createNativeStackNavigator();
 const HomeStack = createNativeStackNavigator(); 
 const ChatStack = createNativeStackNavigator();
+const SearchStack = createNativeStackNavigator();
+
+import { Home, Search, MessageCircle, PlusSquare, User } from 'lucide-react-native';
 
 const HomeStackNavigator = () => {
   return (
@@ -83,7 +87,8 @@ const ChatStackNavigator = () => {
 
 const ProfileStackNavigator = () => {
   return (
-    <ProfileStack.Navigator>
+    <ProfileStack.Navigator
+    >
       {/* ProfileScreen shown first */}
       <ProfileStack.Screen
         name="ProfileScreen"
@@ -146,38 +151,123 @@ const AuthStackNavigator = () => {
   );
 };
 
+const SearchStackNavigator = () => {
+  return (
+    <SearchStack.Navigator>
+      {/* SearchScreen is the initial screen in the Search stack */}
+      <SearchStack.Screen
+        name="SearchScreen"
+        component={SearchScreen}
+        options={{ headerShown: false }}
+      />
+      {/* UserProfile can be navigated to from SearchScreen */}
+      <SearchStack.Screen
+        name="UserProfile"
+        component={UserProfile}
+        options={{ headerShown: false }}
+      />
+    </SearchStack.Navigator>
+  );
+};
+
 const MainTabNavigator = () => {
   return (
-    <Tab.Navigator initialRouteName="Home">
-      {/* Replace HomeScreen with HomeStackNavigator */}
+    <Tab.Navigator
+      initialRouteName="Home"
+      screenOptions={{
+        tabBarStyle: {
+          backgroundColor: '#ffffff',
+          borderTopWidth: 1,
+          borderTopColor: '#f0f0f0',
+          paddingBottom: 10,
+          paddingTop: 10,
+          height: 85,
+          position: 'absolute',
+          elevation: 0,
+          shadowOpacity: 0,
+        },
+        tabBarActiveTintColor: '#007AFF',  // iOS blue color
+        tabBarInactiveTintColor: '#8E8E93',
+        tabBarShowLabel: true,
+        tabBarLabelStyle: {
+          fontSize: 12,
+          marginTop: 2,
+        },
+      }}
+    >
       <Tab.Screen
         name="Home"
         component={HomeStackNavigator}
-        options={{ headerShown: false }}
+        options={{
+          headerShown: false,
+          tabBarIcon: ({ color, size }) => (
+            <Home
+              size={24}
+              color={color}
+              strokeWidth={2}
+            />
+          ),
+        }}
       />
 
       <Tab.Screen
         name="Search"
-        component={SearchScreen}
-        options={{ headerShown: false }}
-      />
-
-      <Tab.Screen
-        name="Messages"
-        component={ChatStackNavigator}
-        options={{ headerShown: false }}
+        component={SearchStackNavigator}
+        options={{
+          headerShown: false,
+          tabBarIcon: ({ color, size }) => (
+            <Search
+              size={24}
+              color={color}
+              strokeWidth={2}
+            />
+          ),
+        }}
       />
 
       <Tab.Screen
         name="CreatePost"
         component={CreatePostScreen}
-        options={{ headerShown: false }}
+        options={{
+          headerShown: false,
+          tabBarIcon: ({ color, size }) => (
+            <PlusSquare
+              size={24}
+              color={color}
+              strokeWidth={2}
+            />
+          ),
+        }}
+      />
+
+      <Tab.Screen
+        name="Messages"
+        component={ChatStackNavigator}
+        options={{
+          headerShown: false,
+          tabBarIcon: ({ color, size }) => (
+            <MessageCircle
+              size={24}
+              color={color}
+              strokeWidth={2}
+            />
+          ),
+        }}
       />
 
       <Tab.Screen
         name="Profile"
         component={ProfileStackNavigator}
-        options={{ headerShown: false }}
+        options={{
+          headerShown: false,
+          tabBarIcon: ({ color, size }) => (
+            <User
+              size={24}
+              color={color}
+              strokeWidth={2}
+            />
+          ),
+        }}
       />
     </Tab.Navigator>
   );

@@ -4,18 +4,18 @@ import { API_ROUTE, IP_PORT } from '@env';
 
 export const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
-    
+
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [userData, setUserData] = useState(null);
 
     const login = async (email, password) => {
         try {
             const response = await fetch(`${IP_PORT}${API_ROUTE}/users/login`, {
-                method: 'POST', 
+                method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                }, 
-                body: JSON.stringify({email, password}), 
+                },
+                body: JSON.stringify({ email, password }),
             });
 
             const data = await response.json();
@@ -29,18 +29,18 @@ export const AuthProvider = ({ children }) => {
                 console.log('Login failed');
             }
         } catch (error) {
-            console.log('Error: ' + error);
+            console.log('Error: ' + error.message);
         }
     };
 
     const signup = async (username, email, password, confirmPassword) => {
         try {
             const response = await fetch(`${IP_PORT}${API_ROUTE}/users/signup`, {
-                method: 'POST', 
+                method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                }, 
-                body: JSON.stringify({username, email, password, confirmPassword}), 
+                },
+                body: JSON.stringify({ username, email, password, confirmPassword }),
             });
 
             if (response.ok) {
@@ -49,7 +49,7 @@ export const AuthProvider = ({ children }) => {
                 console.log('sign up failed');
             }
         } catch (error) {
-            console.log('Error: ' + error);
+            console.log('Error: ' + error.message);
         }
     };
 
@@ -63,12 +63,12 @@ export const AuthProvider = ({ children }) => {
                 console.log('Log out failed');
             }
         } catch (error) {
-            console.log(error);
+            console.log(error.message);
         }
     }
 
     return (
-        <AuthContext.Provider value = {{isLoggedIn, login, signup, logout, userData}}>
+        <AuthContext.Provider value={{ isLoggedIn, login, signup, logout, userData }}>
             {children}
         </AuthContext.Provider>
     );

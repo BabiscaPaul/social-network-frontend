@@ -57,7 +57,7 @@ const FriendsScreen = () => {
             }
         } catch (err) {
             setError(err.message || 'Something went wrong!');
-            console.error('Error fetching friends:', err);
+            console.error('Error fetching friends:', err.message);
         } finally {
             setLoading(false);
         }
@@ -112,7 +112,7 @@ const FriendsScreen = () => {
                 { cancelable: true }
             );
         } catch (err) {
-            console.error('Error removing friend:', err);
+            console.error('Error removing friend:', err.message);
             Alert.alert('Error', err.message || 'Failed to remove friend');
         }
     };

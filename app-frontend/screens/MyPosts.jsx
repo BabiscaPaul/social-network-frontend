@@ -46,7 +46,7 @@ const MyPosts = () => {
             setUserPosts(data.data.posts || data.posts || []);
         } catch (err) {
             setError(err.message || 'Something went wrong!');
-            console.error('Error fetching your posts:', err);
+            console.error('Error fetching your posts:', err.message);
         } finally {
             setLoading(false);
         }
@@ -90,7 +90,7 @@ const MyPosts = () => {
             setCommentInput((prev) => ({ ...prev, [postId]: '' }));
         } catch (error) {
             Alert.alert('Error', `Error posting comment: ${error.message}`);
-            console.error(`Error posting comment for post ${postId}:`, error);
+            console.error(`Error posting comment for post ${postId}:`, error.message);
         }
     };
 

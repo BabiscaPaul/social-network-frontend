@@ -15,6 +15,10 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import { IP_PORT, API_ROUTE } from '@env'; // Ensure these are correctly set in your .env file
 import { useFocusEffect } from '@react-navigation/native';
 
+// At the top of MessagesScreen.js, add:
+// import { LinearGradient } from 'expo-linear-gradient';
+// import { BlurView } from 'expo-blur';
+
 const MessagesScreen = ({ navigation }) => {
     const [chats, setChats] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -57,7 +61,7 @@ const MessagesScreen = ({ navigation }) => {
                 throw new Error(`Failed to fetch chats: ${response.status} ${response.statusText}`);
             }
         } catch (err) {
-            console.error('Error fetching chats:', err);
+            console.error('Error fetching chats:', err.message);
             setError(err.message || 'Something went wrong!');
             // Show alert only for errors other than 404
             if (err.message && !err.message.includes('404')) {
@@ -138,44 +142,46 @@ const MessagesScreen = ({ navigation }) => {
      * @returns {JSX.Element} - The rendered chat card.
      */
     const renderChat = ({ item }) => {
-        // Identify the other participant based on chat data
-        // Assuming that the backend returns relevant chats for the current user
         return (
             <TouchableOpacity
                 style={styles.chatCard}
                 onPress={() => handleChatPress(item)}
-                disabled={loadingChatId === item._id} // Disable if loading
+                disabled={loadingChatId === item._id}
             >
-                {/* Chat Avatar or Initial for User1 */}
-                <View style={styles.avatarContainer}>
-                    <Text style={styles.avatarText}>
-                        {item.user1.username.charAt(0).toUpperCase()}
-                    </Text>
+                {/* Avatar Group with refined styling */}
+                <View style={styles.avatarGroup}>
+                    {/* First Avatar */}
+                    <View style={[styles.avatarContainer, { backgroundColor: '#2563eb' }]}>
+                        <Text style={styles.avatarText}>
+                            {item.user1.username.charAt(0).toUpperCase()}
+                        </Text>
+                    </View>
+
+                    {/* Second Avatar with subtle overlap */}
+                    <View style={[styles.avatarContainer, styles.secondAvatar, { backgroundColor: '#3b82f6' }]}>
+                        <Text style={styles.avatarText}>
+                            {item.user2.username.charAt(0).toUpperCase()}
+                        </Text>
+                    </View>
                 </View>
 
-                {/* Chat Avatar or Initial for User2 */}
-                <View style={styles.avatarContainer}>
-                    <Text style={styles.avatarText}>
-                        {item.user2.username.charAt(0).toUpperCase()}
-                    </Text>
-                </View>
-
-                {/* Chat Details */}
                 <View style={styles.chatContent}>
-                    <Text style={styles.chatName}>
+                    <Text style={styles.chatName} numberOfLines={1}>
                         {item.user1.username} & {item.user2.username}
                     </Text>
-                    {/* Optionally, display the latest message */}
-                    {item.lastMessage ? (
+                    {item.lastMessage && (
                         <Text style={styles.latestMessage} numberOfLines={1}>
                             {item.lastMessage}
                         </Text>
-                    ) : null}
+                    )}
                 </View>
 
-                {/* Loading Indicator for this chat */}
                 {loadingChatId === item._id && (
-                    <ActivityIndicator size="small" color="#4CAF50" style={styles.chatLoading} />
+                    <ActivityIndicator
+                        size="small"
+                        color="#2563eb"
+                        style={styles.chatLoading}
+                    />
                 )}
             </TouchableOpacity>
         );
@@ -187,13 +193,24 @@ const MessagesScreen = ({ navigation }) => {
     const renderEmptyChats = () => {
         return (
             <View style={styles.emptyContainer}>
-                <Ionicons name="chatbubble-ellipses-outline" size={60} color="#999" />
-                <Text style={styles.emptyText}>No chats created yet. Start a new conversation!</Text>
+                <View style={styles.emptyIconContainer}>
+                    <Ionicons
+                        name="chatbubble-ellipses-outline"
+                        size={70}
+                        color="#b48ed6"
+                    />
+                </View>
+                <Text style={styles.emptyTitle}>No Conversations Yet</Text>
+                <Text style={styles.emptyText}>
+                    Start connecting with others by creating a new chat
+                </Text>
                 <TouchableOpacity
                     style={styles.createChatButton}
                     onPress={handleCreateNewChat}
                 >
-                    <Text style={styles.createChatButtonText}>Create New Chat</Text>
+                    <Text style={styles.createChatButtonText}>
+                        Start New Chat
+                    </Text>
                 </TouchableOpacity>
             </View>
         );
@@ -252,125 +269,128 @@ export default MessagesScreen;
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#f5f5f5',
+        backgroundColor: '#fafafa',
     },
     listContainer: {
-        padding: 10,
+        padding: 16,
+        paddingBottom: 120, // Extra space for FAB
     },
     chatCard: {
         flexDirection: 'row',
-        backgroundColor: '#fff',
-        padding: 15,
-        borderRadius: 10,
+        backgroundColor: '#ffffff',
+        padding: 16,
+        marginVertical: 6,
+        borderRadius: 16,
         alignItems: 'center',
+        // Refined shadow for depth
         shadowColor: '#000',
-        shadowOpacity: 0.05,
-        shadowRadius: 5,
         shadowOffset: { width: 0, height: 2 },
-        elevation: 2,
-        position: 'relative',
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
+        elevation: 3,
+        // Subtle border for additional definition
+        borderWidth: 1,
+        borderColor: 'rgba(0, 0, 0, 0.05)',
+    },
+    avatarGroup: {
+        flexDirection: 'row',
+        width: 80,
+        alignItems: 'center',
+        marginRight: 8,
     },
     avatarContainer: {
-        backgroundColor: '#4CAF50',
-        width: 50,
-        height: 50,
-        borderRadius: 25,
+        width: 48,
+        height: 48,
+        borderRadius: 24,
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: 10,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.15,
+        shadowRadius: 3,
+        elevation: 2,
+    },
+    secondAvatar: {
+        marginLeft: -16,
     },
     avatarText: {
         color: '#fff',
-        fontSize: 20,
-        fontWeight: 'bold',
+        fontSize: 18,
+        fontWeight: '600',
     },
     chatContent: {
         flex: 1,
+        marginLeft: 8,
     },
     chatName: {
         fontSize: 16,
-        fontWeight: 'bold',
-        color: '#333',
+        fontWeight: '600',
+        color: '#1a1a1a',
+        marginBottom: 4,
+        letterSpacing: 0.2,
     },
     latestMessage: {
         fontSize: 14,
         color: '#666',
-        marginTop: 4,
-    },
-    separator: {
-        height: 10,
-    },
-    loaderContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    errorContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        padding: 20,
-    },
-    errorText: {
-        fontSize: 18,
-        color: '#F44336',
-        marginBottom: 10,
-    },
-    retryButton: {
-        backgroundColor: '#4CAF50',
-        paddingVertical: 10,
-        paddingHorizontal: 20,
-        borderRadius: 5,
-    },
-    retryButtonText: {
-        color: '#fff',
-        fontSize: 16,
-        fontWeight: 'bold',
+        letterSpacing: 0.1,
+        lineHeight: 20,
     },
     emptyContainer: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        padding: 20,
+        padding: 32,
+        backgroundColor: '#fafafa',
+    },
+    emptyIconContainer: {
+        backgroundColor: 'rgba(37, 99, 235, 0.1)',  // Lighter shade of primary blue
+        padding: 24,
+        borderRadius: 32,
+        marginBottom: 24,
+    },
+    emptyTitle: {
+        fontSize: 24,
+        fontWeight: '600',
+        color: '#1a1a1a',
+        marginBottom: 12,
+        letterSpacing: 0.3,
     },
     emptyText: {
-        fontSize: 18,
-        color: '#777',
+        fontSize: 16,
+        color: '#666',
         textAlign: 'center',
-        marginTop: 15,
+        lineHeight: 24,
+        marginBottom: 32,
+        maxWidth: '80%',
     },
     createChatButton: {
-        marginTop: 20,
-        backgroundColor: '#4CAF50',
-        paddingVertical: 10,
-        paddingHorizontal: 20,
-        borderRadius: 5,
-    },
-    createChatButtonText: {
-        color: '#fff',
-        fontSize: 16,
-        fontWeight: 'bold',
+        backgroundColor: '#2563eb',  // Primary blue
+        paddingVertical: 14,
+        paddingHorizontal: 32,
+        borderRadius: 25,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.15,
+        shadowRadius: 8,
+        elevation: 4,
     },
     fab: {
         position: 'absolute',
-        bottom: 30,
-        right: 30,
-        backgroundColor: '#4CAF50',
-        width: 60,
-        height: 60,
-        borderRadius: 30,
+        bottom: 100,
+        right: 24,
+        backgroundColor: '#2563eb',  // Primary blue
+        width: 56,
+        height: 56,
+        borderRadius: 28,
         justifyContent: 'center',
         alignItems: 'center',
         shadowColor: '#000',
-        shadowOpacity: 0.3,
-        shadowRadius: 5,
-        shadowOffset: { width: 0, height: 2 },
-        elevation: 5,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.2,
+        shadowRadius: 8,
+        elevation: 6,
     },
     chatLoading: {
-        position: 'absolute',
-        right: 15,
-        top: '50%',
-        transform: [{ translateY: -10 }],
+        marginLeft: 16,
     },
 });

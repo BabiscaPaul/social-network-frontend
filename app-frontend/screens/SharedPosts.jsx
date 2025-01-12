@@ -82,7 +82,7 @@ const SharedPosts = () => {
                 }
             } catch (err) {
                 setError(err.message || 'Something went wrong!');
-                console.error('Error:', err);
+                console.error('Error:', err.message);
             } finally {
                 setLoading(false);
             }

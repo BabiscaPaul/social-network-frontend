@@ -52,7 +52,7 @@ const HomeScreen = () => {
             // Navigate to NotificationScreen with notifications data
             navigation.navigate('NotificationScreen', { notifications: data.data.notifications });
         } catch (error) {
-            console.error('Error fetching notifications:', error);
+            console.error('Error fetching notifications:', error.message);
             Alert.alert('Error', `Failed to fetch notifications: ${error.message}`);
         }
     };
@@ -72,7 +72,7 @@ const HomeScreen = () => {
 
     useFocusEffect(
         useCallback(() => {
-            fetchRecentPosts();  
+            fetchRecentPosts();
         }, [])
     );
 
@@ -105,7 +105,7 @@ const HomeScreen = () => {
             }
         } catch (err) {
             setError(err.message || 'Something went wrong!');
-            console.error('Error fetching recent posts:', err);
+            console.error('Error fetching recent posts:', err.message);
         } finally {
             setLoading(false);
         }
@@ -149,7 +149,7 @@ const HomeScreen = () => {
             Alert.alert('Success', 'Post shared successfully!');
         } catch (error) {
             Alert.alert('Error', `Failed to share the post: ${error.message}`);
-            console.error(`Error sharing post ${postId}:`, error);
+            console.error(`Error sharing post ${postId}:`, error.message);
         }
     };
 
@@ -188,7 +188,7 @@ const HomeScreen = () => {
             setCommentInput((prev) => ({ ...prev, [postId]: '' }));
         } catch (error) {
             Alert.alert('Error', `Error posting comment: ${error.message}`);
-            console.error(`Error posting comment for post ${postId}:`, error);
+            console.error(`Error posting comment for post ${postId}:`, error.message);
         }
     };
 
@@ -236,7 +236,7 @@ const HomeScreen = () => {
                 commentedBy: comment.commentedBy || { username: 'Unknown' },
             }));
         } catch (err) {
-            console.error('Error fetching comments:', err);
+            console.error('Error fetching comments:', { ...err });
             return [];
         }
     };

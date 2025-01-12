@@ -1,4 +1,3 @@
-// ProfileScreen.js
 import React, { useState, useEffect, useCallback } from 'react';
 import {
     SafeAreaView,
@@ -9,70 +8,111 @@ import {
     Image,
     ScrollView,
     TouchableOpacity,
+    Animated,
+    Dimensions,
+    Platform,
+    StatusBar,
 } from 'react-native';
-import { useRoute, useNavigation } from '@react-navigation/native'; // Import the hook for navigation
+import { useRoute, useNavigation } from '@react-navigation/native';
 import { API_ROUTE, IP_PORT } from '@env';
 import { useFocusEffect } from '@react-navigation/native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
+
+const { width } = Dimensions.get('window');
+const HEADER_HEIGHT = Platform.OS === 'ios' ? 44 : 56;
+const STATUS_BAR_HEIGHT = Platform.OS === 'ios' ? 20 : StatusBar.currentHeight;
 
 const ProfileScreen = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
-
-    // Profile state
     const [profileData, setProfileData] = useState(null);
+    const scrollY = new Animated.Value(0);
 
     const navigation = useNavigation();
-    const route = useRoute();
+
+    // Animation values
+    const fadeAnim = useState(new Animated.Value(0))[0];
+    const slideAnim = useState(new Animated.Value(50))[0];
 
     useFocusEffect(
         useCallback(() => {
-            fetchUserProfile();  
+            fetchUserProfile();
+            // Trigger entrance animations
+            Animated.parallel([
+                Animated.timing(fadeAnim, {
+                    toValue: 1,
+                    duration: 800,
+                    useNativeDriver: true,
+                }),
+                Animated.timing(slideAnim, {
+                    toValue: 0,
+                    duration: 800,
+                    useNativeDriver: true,
+                }),
+            ]).start();
         }, [])
     );
 
-    // 1) Fetch the user’s profile
     const fetchUserProfile = async () => {
         try {
             setLoading(true);
             setError(null);
-
             const response = await fetch(`${IP_PORT}${API_ROUTE}/users/me`, {
                 method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: { 'Content-Type': 'application/json' },
             });
 
-            if (!response.ok) {
-                throw new Error('Failed to fetch user profile');
-            }
+            if (!response.ok) throw new Error('Failed to fetch user profile');
 
             const data = await response.json();
-            console.log('User Profile Data:', data);
-
-            // Adjust according to your backend response structure
             setProfileData(data.data.user || data.user || data);
         } catch (err) {
             setError(err.message || 'Something went wrong fetching profile!');
-            console.error('Error fetching user profile:', err);
+            console.error('Error fetching user profile:', err.message);
         } finally {
             setLoading(false);
         }
     };
 
-    // Handle loading and error states
+    // Header opacity animation based on scroll
+    const headerOpacity = scrollY.interpolate({
+        inputRange: [0, 100],
+        outputRange: [0, 1],
+        extrapolate: 'clamp',
+    });
+
+    const renderActionButton = (icon, label, onPress) => (
+        <TouchableOpacity
+            style={styles.actionButton}
+            onPress={onPress}
+            activeOpacity={0.7}
+        >
+            <LinearGradient
+                colors={['#000', '#333']}
+                style={styles.actionButtonGradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+            >
+                <Ionicons name={icon} size={24} color="#fff" />
+                <Text style={styles.actionButtonText}>{label}</Text>
+            </LinearGradient>
+        </TouchableOpacity>
+    );
+
     if (loading) {
         return (
-            <SafeAreaView style={styles.centeredContainer}>
+            <SafeAreaView style={styles.loadingContainer}>
                 <ActivityIndicator size="large" color="#000" />
-                <Text style={styles.loadingText}>Loading...</Text>
+                <Text style={styles.loadingText}>Loading your profile...</Text>
             </SafeAreaView>
         );
     }
 
     if (error) {
         return (
-            <SafeAreaView style={styles.centeredContainer}>
+            <SafeAreaView style={styles.errorContainer}>
+                <Ionicons name="alert-circle" size={48} color="#FF3B30" />
                 <Text style={styles.errorText}>{error}</Text>
             </SafeAreaView>
         );
@@ -80,160 +120,234 @@ const ProfileScreen = () => {
 
     return (
         <SafeAreaView style={styles.container}>
+            {/* Animated Header */}
+            <Animated.View style={[styles.header, { opacity: headerOpacity }]}>
+                <View style={styles.headerContent}>
+                    <Text style={styles.headerTitle}>Profile</Text>
+                </View>
+            </Animated.View>
+
             {profileData ? (
-                <ScrollView contentContainerStyle={styles.scrollContent}>
-                    {/* Profile Picture */}
-                    <View style={styles.profileImageContainer}>
+                <Animated.ScrollView
+                    contentContainerStyle={styles.scrollContent}
+                    onScroll={Animated.event(
+                        [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+                        { useNativeDriver: false }
+                    )}
+                    scrollEventThrottle={16}
+                >
+                    {/* Profile Section */}
+                    <Animated.View
+                        style={[
+                            styles.profileSection,
+                            {
+                                opacity: fadeAnim,
+                                transform: [{ translateY: slideAnim }],
+                            },
+                        ]}
+                    >
                         <Image
                             style={styles.profileImage}
                             source={{
                                 uri: 'https://via.placeholder.com/150/CCC/FFF?text=Avatar',
                             }}
                         />
-                    </View>
+                        <LinearGradient
+                            colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.1)']}
+                            style={styles.profileImageOverlay}
+                        />
+                    </Animated.View>
 
-                    {/* Profile Info Card */}
-                    <View style={styles.infoCard}>
+                    {/* Profile Info */}
+                    <Animated.View
+                        style={[
+                            styles.infoCard,
+                            {
+                                opacity: fadeAnim,
+                                transform: [{ translateY: slideAnim }],
+                            },
+                        ]}
+                    >
                         <Text style={styles.username}>@{profileData.username}</Text>
                         <Text style={styles.email}>{profileData.email}</Text>
                         <Text style={styles.bio}>
                             {profileData.bio || 'No bio available'}
                         </Text>
+                    </Animated.View>
+
+                    {/* Action Buttons */}
+                    <View style={styles.actionButtonsContainer}>
+                        {renderActionButton('pencil', 'Edit Profile', () =>
+                            navigation.navigate('EditProfileScreen')
+                        )}
+                        {renderActionButton('documents', 'My Posts', () =>
+                            navigation.navigate('MyPostsScreen')
+                        )}
+                        {renderActionButton('share-social', 'Shared Posts', () =>
+                            navigation.navigate('SharedPostsScreen')
+                        )}
+                        {renderActionButton('people', 'Friends', () =>
+                            navigation.navigate('FriendsScreen')
+                        )}
                     </View>
-
-                    {/* Edit Profile Button */}
-                    <TouchableOpacity
-                        style={styles.editButton}
-                        onPress={() => navigation.navigate('EditProfileScreen')}
-                    >
-                        <Text style={styles.editButtonText}>Edit Profile</Text>
-                    </TouchableOpacity>
-
-                    {/* My Posts Button */}
-                    <TouchableOpacity
-                        style={styles.editButton}
-                        onPress={() => navigation.navigate('MyPostsScreen')}
-                    >
-                        <Text style={styles.editButtonText}>My Posts</Text>
-                    </TouchableOpacity>
-
-                    {/* Shared Posts Button */}
-                    <TouchableOpacity
-                        style={styles.editButton}
-                        onPress={() => navigation.navigate('SharedPostsScreen')} 
-                    >
-                        <Text style={styles.editButtonText}>Shared Posts</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                        style={styles.editButton}
-                        onPress={() => navigation.navigate('FriendsScreen')}
-                    >
-                        <Text style={styles.editButtonText}>Friends</Text>
-                    </TouchableOpacity>
-
-                    {/* You can add more profile-related actions here */}
-                </ScrollView>
+                </Animated.ScrollView>
             ) : (
-                <View style={styles.centeredContainer}>
-                    <Text>No profile data available.</Text>
+                <View style={styles.emptyContainer}>
+                    <Ionicons name="person-outline" size={48} color="#999" />
+                    <Text style={styles.emptyText}>No profile data available.</Text>
                 </View>
             )}
         </SafeAreaView>
     );
 };
 
-export default ProfileScreen;
-
-//-------------------------------------
-// Styles
-//-------------------------------------
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#fafafa',
+        backgroundColor: '#F8F9FA',
+    },
+    header: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        zIndex: 1000,
+        height: HEADER_HEIGHT + STATUS_BAR_HEIGHT,
+        backgroundColor: 'rgba(248, 249, 250, 0.9)', // Added background color to replace blur effect
+    },
+    headerContent: {
+        flex: 1,
+        justifyContent: 'flex-end',
+        paddingBottom: 10,
+    },
+    headerTitle: {
+        fontSize: 17,
+        fontWeight: '600',
+        textAlign: 'center',
+        color: '#000',
     },
     scrollContent: {
-        alignItems: 'center',
         paddingBottom: 30,
     },
-    centeredContainer: {
+    loadingContainer: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
+        backgroundColor: '#F8F9FA',
     },
     loadingText: {
-        marginTop: 10,
+        marginTop: 12,
         fontSize: 16,
+        color: '#666',
+        fontWeight: '500',
+    },
+    errorContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: '#F8F9FA',
+        padding: 20,
     },
     errorText: {
-        color: 'red',
+        marginTop: 12,
         fontSize: 16,
+        color: '#FF3B30',
         textAlign: 'center',
-        marginHorizontal: 20,
+        lineHeight: 24,
     },
-
-    // Profile Image
-    profileImageContainer: {
+    profileSection: {
+        alignItems: 'center',
         marginTop: 30,
         marginBottom: 20,
-        alignItems: 'center',
     },
     profileImage: {
-        width: 120,
-        height: 120,
-        resizeMode: 'cover',
-        borderRadius: 60,
-        borderWidth: 3,
+        width: 140,
+        height: 140,
+        borderRadius: 70,
+        borderWidth: 4,
         borderColor: '#fff',
-        backgroundColor: '#ccc',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.1,
+        shadowRadius: 10,
     },
-
-    // Info Card
+    profileImageOverlay: {
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        height: 70,
+        borderRadius: 70,
+    },
     infoCard: {
-        width: '85%',
+        width: width - 40,
         backgroundColor: '#fff',
-        borderRadius: 12,
-        padding: 20,
+        borderRadius: 16,
+        padding: 24,
+        marginHorizontal: 20,
         alignItems: 'center',
         shadowColor: '#000',
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
         shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 15,
         elevation: 2,
-        marginBottom: 20,
     },
     username: {
-        fontSize: 22,
+        fontSize: 24,
         fontWeight: '700',
-        marginBottom: 6,
+        color: '#000',
+        marginBottom: 8,
     },
     email: {
         fontSize: 16,
-        color: '#888',
-        marginBottom: 12,
+        color: '#666',
+        marginBottom: 16,
     },
     bio: {
         fontSize: 16,
-        color: '#555',
+        color: '#444',
         textAlign: 'center',
-        lineHeight: 22,
+        lineHeight: 24,
     },
-
-    // Edit Profile Button
-    editButton: {
-        width: '85%',
-        backgroundColor: '#000',
-        borderRadius: 8,
-        paddingVertical: 12,
+    actionButtonsContainer: {
+        paddingHorizontal: 20,
+        marginTop: 20,
+    },
+    actionButton: {
+        marginBottom: 12,
+        borderRadius: 12,
+        overflow: 'hidden',
+        elevation: 2,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
+    },
+    actionButtonGradient: {
+        flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: 20,
+        justifyContent: 'center',
+        paddingVertical: 16,
+        paddingHorizontal: 24,
     },
-    editButtonText: {
+    actionButtonText: {
         color: '#fff',
-        fontSize: 18,
+        fontSize: 16,
         fontWeight: '600',
+        marginLeft: 12,
     },
-
-    // You can add more styles as needed
+    emptyContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: '#F8F9FA',
+    },
+    emptyText: {
+        marginTop: 12,
+        fontSize: 16,
+        color: '#999',
+        textAlign: 'center',
+    },
 });
+
+export default ProfileScreen;

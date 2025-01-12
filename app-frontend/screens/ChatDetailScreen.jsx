@@ -15,9 +15,10 @@ import {
     Alert,
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import { IP_PORT, API_ROUTE } from '@env'; // Ensure these are correctly set in your .env file
+import { IP_PORT, API_ROUTE } from '@env'; 
 
 const ChatDetailScreen = ({ route, navigation }) => {
+    // Destructure params from route
     const {
         chatId,
         messages,
@@ -27,16 +28,19 @@ const ChatDetailScreen = ({ route, navigation }) => {
         user2Id,
     } = route.params;
 
-    const [currentUser, setCurrentUser] = useState(null); // To store current user data
+    // Local state
+    const [currentUser, setCurrentUser] = useState(null);
     const [messageList, setMessageList] = useState(messages || []);
     const [newMessage, setNewMessage] = useState('');
     const [sending, setSending] = useState(false);
     const [loadingCurrentUser, setLoadingCurrentUser] = useState(true);
     const [errorFetchingUser, setErrorFetchingUser] = useState(null);
+
+    // For auto-scrolling to the bottom
     const flatListRef = useRef(null);
 
     /**
-     * Fetches the current user's data from the backend.
+     * Fetch the current user data
      */
     const fetchCurrentUser = async () => {
         try {
@@ -44,8 +48,8 @@ const ChatDetailScreen = ({ route, navigation }) => {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
-                    // Include authentication headers if required
-                    // 'Authorization': `Bearer your-token-here`,
+                    // Include auth headers if necessary
+                    // 'Authorization': `Bearer <token>`,
                 },
             });
 
@@ -54,16 +58,13 @@ const ChatDetailScreen = ({ route, navigation }) => {
             }
 
             const data = await response.json();
-            console.log('Current User Data:', data);
 
-            // Extract the user object from the response
             if (data.status === 'success' && data.data.user) {
                 setCurrentUser(data.data.user);
             } else {
                 throw new Error('Invalid data format received from server');
             }
         } catch (err) {
-            console.error('Error fetching current user:', err);
             setErrorFetchingUser(err.message || 'Something went wrong!');
             Alert.alert('Error', `Failed to fetch user data: ${err.message}`);
         } finally {
@@ -76,7 +77,7 @@ const ChatDetailScreen = ({ route, navigation }) => {
     }, []);
 
     /**
-     * Scrolls to the bottom of the FlatList whenever a new message is added.
+     * Scroll to the latest message whenever messageList changes
      */
     useEffect(() => {
         if (flatListRef.current && messageList.length > 0) {
@@ -85,7 +86,7 @@ const ChatDetailScreen = ({ route, navigation }) => {
     }, [messageList]);
 
     /**
-     * Function to send a new message to the backend.
+     * Send a new message
      */
     const handleSendMessage = async () => {
         if (newMessage.trim() === '') {
@@ -106,7 +107,7 @@ const ChatDetailScreen = ({ route, navigation }) => {
             const senderId = isUser1 ? user1Id : user2Id;
             const receiverId = isUser1 ? user2Id : user1Id;
 
-            // Prepare the request body
+            // Build the request body
             const requestBody = {
                 chat: chatId,
                 sender: senderId,
@@ -114,13 +115,11 @@ const ChatDetailScreen = ({ route, navigation }) => {
                 content: newMessage.trim(),
             };
 
-            // Make the POST request to send the message
+            // Send request to backend
             const response = await fetch(`${IP_PORT}${API_ROUTE}/chats/message`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    // Include authentication headers if required
-                    // 'Authorization': `Bearer your-token-here`,
                 },
                 body: JSON.stringify(requestBody),
             });
@@ -130,13 +129,11 @@ const ChatDetailScreen = ({ route, navigation }) => {
             }
 
             const data = await response.json();
-            console.log('Send Message Response:', data);
 
-            // Validate response structure
             if (data.status === 'success' && data.data.message) {
                 let newMessageData = data.data.message;
 
-                // Ensure sender field is correctly set
+                // Ensure the sender object is correct
                 if (!newMessageData.sender || newMessageData.sender._id !== currentUser._id) {
                     newMessageData.sender = {
                         _id: currentUser._id,
@@ -144,14 +141,13 @@ const ChatDetailScreen = ({ route, navigation }) => {
                     };
                 }
 
-                // Append the new message to the message list
+                // Append new message
                 setMessageList([...messageList, newMessageData]);
                 setNewMessage('');
             } else {
                 throw new Error('Invalid data format received from server');
             }
         } catch (err) {
-            console.error('Error sending message:', err);
             Alert.alert('Error', `Failed to send message: ${err.message}`);
         } finally {
             setSending(false);
@@ -159,14 +155,11 @@ const ChatDetailScreen = ({ route, navigation }) => {
     };
 
     /**
-     * Renders each message in the FlatList.
-     *
-     * @param {object} param0 - The item object from FlatList.
-     * @returns {JSX.Element} - The rendered message bubble.
+     * Render a single message bubble
      */
     const renderMessage = ({ item }) => {
         if (!currentUser) {
-            // If current user data is not loaded, default to left alignment
+            // Before currentUser is set, default to left alignment
             return (
                 <View style={[styles.messageContainer, styles.messageLeft]}>
                     <View style={[styles.messageBubble, styles.otherUserBubble]}>
@@ -177,13 +170,7 @@ const ChatDetailScreen = ({ route, navigation }) => {
             );
         }
 
-        // Determine if the message was sent by the current user using IDs
         const isCurrentUser = item.sender._id === currentUser._id;
-
-        // Log the IDs being compared for debugging
-        console.log(`Comparing sender ID: ${item.sender._id} with currentUser ID: ${currentUser._id} (isCurrentUser: ${isCurrentUser})`);
-
-        // Determine the sender's username to display
         const senderUsername = isCurrentUser ? 'You' : item.sender.username;
 
         return (
@@ -199,15 +186,14 @@ const ChatDetailScreen = ({ route, navigation }) => {
                         isCurrentUser ? styles.currentUserBubble : styles.otherUserBubble,
                     ]}
                 >
-                    {/* Display Sender's Username */}
                     <Text style={styles.senderUsername}>{senderUsername}</Text>
-                    {/* Display Message Content */}
                     <Text style={styles.messageText}>{item.content}</Text>
                 </View>
             </View>
         );
     };
 
+    // Loader if fetching user data
     if (loadingCurrentUser) {
         return (
             <SafeAreaView style={styles.loaderContainer}>
@@ -216,6 +202,7 @@ const ChatDetailScreen = ({ route, navigation }) => {
         );
     }
 
+    // Error view if fetching user fails
     if (errorFetchingUser) {
         return (
             <SafeAreaView style={styles.errorContainer}>
@@ -228,12 +215,12 @@ const ChatDetailScreen = ({ route, navigation }) => {
     }
 
     return (
-        <SafeAreaView style={styles.container}>
-            <KeyboardAvoidingView
-                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-                style={styles.keyboardAvoidingView}
-                keyboardVerticalOffset={90}
-            >
+        <KeyboardAvoidingView
+            style={{ flex: 1 }}
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            keyboardVerticalOffset={Platform.OS === 'ios' ? 60 : 20}
+        >
+            <SafeAreaView style={styles.container}>
                 <FlatList
                     ref={flatListRef}
                     data={messageList}
@@ -243,6 +230,7 @@ const ChatDetailScreen = ({ route, navigation }) => {
                     showsVerticalScrollIndicator={false}
                 />
 
+        
                 <View style={styles.inputContainer}>
                     <TextInput
                         style={styles.textInput}
@@ -263,77 +251,115 @@ const ChatDetailScreen = ({ route, navigation }) => {
                         )}
                     </TouchableOpacity>
                 </View>
-            </KeyboardAvoidingView>
-        </SafeAreaView>
+            </SafeAreaView>
+        </KeyboardAvoidingView>
     );
-
 };
 
 export default ChatDetailScreen;
 
 const styles = StyleSheet.create({
+    /**
+     * Container for the whole screen background
+     */
     container: {
         flex: 1,
         backgroundColor: '#f5f5f5',
     },
+    /**
+     * Styles for the flatList container
+     * - 'paddingBottom' ensures the last message won't be hidden behind the input
+     *   if there's no enough scrollable space
+     */
     flatListContainer: {
         padding: 10,
-        paddingBottom: 60, // To avoid overlapping with input
+        paddingBottom: 60,
     },
+
+    /**
+     * Each message container
+     */
     messageContainer: {
         marginVertical: 5,
         flexDirection: 'row',
     },
+    /**
+     * Align messages to the left
+     */
     messageLeft: {
         justifyContent: 'flex-start',
     },
+    /**
+     * Align messages to the right
+     */
     messageRight: {
         justifyContent: 'flex-end',
     },
+    /**
+     * The bubble styling
+     */
     messageBubble: {
         borderRadius: 15,
         padding: 10,
         maxWidth: '80%',
     },
+    /**
+     * Bubble for the other user
+     */
     otherUserBubble: {
-        backgroundColor: '#e0e0e0',
+        backgroundColor: '#3b82f6',
     },
+    /**
+     * Bubble for the current user
+     */
     currentUserBubble: {
-        backgroundColor: '#4CAF50',
+        backgroundColor: '#2563eb',
     },
+    /**
+     * Username text inside bubble
+     */
     senderUsername: {
         fontSize: 14,
         fontWeight: 'bold',
         color: '#333',
         marginBottom: 5,
     },
+    /**
+     * Message text
+     */
     messageText: {
         color: '#000',
         fontSize: 16,
     },
+
     inputContainer: {
-        position: 'absolute',
-        bottom: 10,
-        left: 10,
-        right: 10,
         flexDirection: 'row',
         alignItems: 'center',
         backgroundColor: '#fff',
         borderRadius: 25,
         paddingHorizontal: 15,
+        marginHorizontal: 10,
+        marginBottom: 60,  
         shadowColor: '#000',
         shadowOpacity: 0.1,
         shadowRadius: 5,
         shadowOffset: { width: 0, height: 2 },
         elevation: 2,
     },
+    /**
+     * TextInput to enter messages
+     * 'maxHeight' helps if multi-line input grows too large
+     */
     textInput: {
         flex: 1,
         maxHeight: 100,
         fontSize: 16,
     },
+    /**
+     * Send button on the right side
+     */
     sendButton: {
-        backgroundColor: '#4CAF50',
+        backgroundColor: '#2563eb',
         borderRadius: 20,
         width: 40,
         height: 40,
@@ -341,14 +367,17 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         marginLeft: 10,
     },
-    keyboardAvoidingView: {
-        flex: 1,
-    },
+    /**
+     * Loader container if fetching data
+     */
     loaderContainer: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
     },
+    /**
+     * Error screen container
+     */
     errorContainer: {
         flex: 1,
         justifyContent: 'center',

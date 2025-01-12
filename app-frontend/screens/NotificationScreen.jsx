@@ -59,7 +59,7 @@ const NotificationScreen = ({ route, navigation }) => {
             // Optionally, you can refresh the notifications from the server
             // For now, we're just removing it locally
         } catch (error) {
-            console.error(`Error processing friend request:`, error);
+            console.error(`Error processing friend request:`, error.message);
             Alert.alert('Error', `Failed to process friend request: ${error.message}`);
         } finally {
             // Remove loading state for this notification

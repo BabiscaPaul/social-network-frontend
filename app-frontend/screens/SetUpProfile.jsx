@@ -40,7 +40,7 @@ const SetUpProfile = () => {
                 console.log("Failed to set up profile");
             }
         } catch (error) {
-            console.log('Error: ' + error);
+            console.log('Error: ' + error.message);
         }
     };
 
